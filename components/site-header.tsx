@@ -1,10 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { Suspense } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth-context";
 import { adminHref, dashboardHref } from "@/lib/app-links";
+import { loginHref } from "@/lib/auth-redirect";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -38,9 +40,14 @@ function NavLink({ href, label, exact }: { href: string; label: string; exact?: 
   );
 }
 
-export function SiteHeader() {
+function SiteHeaderInner() {
   const { user, logout, isAdmin } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const signInHref = loginHref(
+    `${pathname}${searchParams.toString() ? `?${searchParams.toString()}` : ""}`,
+  );
 
   return (
     <header className="sticky top-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-xl">
@@ -94,7 +101,7 @@ export function SiteHeader() {
             </DropdownMenu>
           ) : (
             <Button asChild variant="ghost" size="sm" className="rounded-full font-semibold hidden sm:inline-flex">
-              <Link href="/login">Sign in</Link>
+              <Link href={signInHref}>Sign in</Link>
             </Button>
           )}
           <Button asChild size="sm" className="rounded-full px-5 font-semibold shadow-[var(--shadow-soft)] hidden sm:inline-flex">
@@ -120,5 +127,17 @@ export function SiteHeader() {
         </div>
       </div>
     </header>
+  );
+}
+
+export function SiteHeader() {
+  return (
+    <Suspense
+      fallback={
+        <header className="sticky top-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-xl h-16" />
+      }
+    >
+      <SiteHeaderInner />
+    </Suspense>
   );
 }

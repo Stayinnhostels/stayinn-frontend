@@ -1,11 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useState } from "react";
+import { Suspense, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Eye, EyeOff, Loader2, Mail, Lock, User } from "lucide-react";
 import { AuthLayout } from "@/components/auth/auth-layout";
@@ -14,8 +14,8 @@ import { PasswordStrength, getPasswordScore } from "@/components/auth/password-s
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
 import { useAuth } from "@/lib/auth-context";
+import { loginHref, readReturnPathFromSearch, safeReturnPath } from "@/lib/auth-redirect";
 
 const schema = z
   .object({
@@ -24,7 +24,6 @@ const schema = z
     password: z.string().min(8, "At least 8 characters").max(72),
     confirmPassword: z.string(),
     role: z.enum(["athlete", "coach", "academy", "admin"]),
-    accept: z.literal(true, { errorMap: () => ({ message: "You must accept the terms" }) }),
   })
   .refine((d) => d.password === d.confirmPassword, {
     message: "Passwords do not match",
@@ -41,10 +40,15 @@ const roles: { value: SignupRole; label: string; desc: string }[] = [
   { value: "admin", label: "Admin", desc: "Operations team" },
 ];
 
-export default function SignupPage() {
+function SignupForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { signup } = useAuth();
   const [showPw, setShowPw] = useState(false);
+  const returnTo = useMemo(
+    () => safeReturnPath(readReturnPathFromSearch(searchParams)),
+    [searchParams],
+  );
 
   const {
     register,
@@ -60,7 +64,6 @@ export default function SignupPage() {
       password: "",
       confirmPassword: "",
       role: "athlete",
-      accept: false as unknown as true,
     },
   });
   const pw = watch("password");
@@ -77,9 +80,13 @@ export default function SignupPage() {
         email: values.email,
         password: values.password,
         role: values.role,
+        returnPath: returnTo,
       });
-      toast.success("Account created!");
-      router.push("/verify-email");
+      toast.success("Account created! Check your email to verify your account.");
+      const verifyParams = new URLSearchParams();
+      if (returnTo && returnTo !== "/") verifyParams.set("from", returnTo);
+      const q = verifyParams.toString();
+      router.push(q ? `/verify-email?${q}` : "/verify-email");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Signup failed");
     }
@@ -92,7 +99,7 @@ export default function SignupPage() {
       footer={
         <>
           Already a member?{" "}
-          <Link href="/login" className="font-bold text-primary hover:underline">
+          <Link href={loginHref(returnTo)} className="font-bold text-primary hover:underline">
             Sign in
           </Link>
         </>
@@ -181,22 +188,6 @@ export default function SignupPage() {
           </div>
         </div>
 
-        <label className="flex items-start gap-2 text-sm cursor-pointer select-none">
-          <Checkbox className="mt-0.5" {...register("accept")} />
-          <span className="text-muted-foreground">
-            I agree to the{" "}
-            <Link href="/terms" className="font-bold text-primary hover:underline">
-              Terms
-            </Link>{" "}
-            and{" "}
-            <Link href="/privacy" className="font-bold text-primary hover:underline">
-              Privacy Policy
-            </Link>
-            .
-          </span>
-        </label>
-        {errors.accept && <p className="text-xs text-destructive font-medium">{errors.accept.message}</p>}
-
         <Button type="submit" disabled={isSubmitting} size="lg" className="w-full rounded-full font-bold shadow-[var(--shadow-soft)]">
           {isSubmitting ? (
             <>
@@ -208,5 +199,13 @@ export default function SignupPage() {
         </Button>
       </form>
     </AuthLayout>
+  );
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense fallback={null}>
+      <SignupForm />
+    </Suspense>
   );
 }

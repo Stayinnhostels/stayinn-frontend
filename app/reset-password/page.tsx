@@ -1,11 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { toast } from "sonner";
 import { Eye, EyeOff, Loader2, Lock, ShieldCheck } from "lucide-react";
 import { AuthLayout } from "@/components/auth/auth-layout";
@@ -26,9 +26,11 @@ const schema = z
   });
 type FormValues = z.infer<typeof schema>;
 
-export default function ResetPasswordPage() {
+function ResetPasswordForm() {
   const { resetPassword } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const token = searchParams.get("token")?.trim() ?? "";
   const [showPw, setShowPw] = useState(false);
 
   const {
@@ -39,13 +41,31 @@ export default function ResetPasswordPage() {
   } = useForm<FormValues>({ resolver: zodResolver(schema), defaultValues: { password: "", confirmPassword: "" } });
   const pw = watch("password");
 
+  if (!token || !/^[a-f0-9]{64}$/i.test(token)) {
+    return (
+      <AuthLayout
+        title="Invalid reset link"
+        subtitle="Use the link from your email, or request a new one."
+        footer={
+          <Link href="/forgot-password" className="font-bold text-primary hover:underline">
+            Request new link
+          </Link>
+        }
+      >
+        <Button asChild className="w-full rounded-full font-bold h-11">
+          <Link href="/forgot-password">Forgot password</Link>
+        </Button>
+      </AuthLayout>
+    );
+  }
+
   const onSubmit = async ({ password }: FormValues) => {
     if (getPasswordScore(password) < 2) {
       toast.error("Please choose a stronger password");
       return;
     }
     try {
-      await resetPassword(password);
+      await resetPassword(token, password);
       toast.success("Password updated!");
       router.push("/login");
     } catch (e) {
@@ -70,7 +90,13 @@ export default function ResetPasswordPage() {
           </Label>
           <div className="relative">
             <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input id="password" type={showPw ? "text" : "password"} placeholder="At least 8 characters" className="pl-10 pr-10 h-11 rounded-full" {...register("password")} />
+            <Input
+              id="password"
+              type={showPw ? "text" : "password"}
+              placeholder="At least 8 characters"
+              className="pl-10 pr-10 h-11 rounded-full"
+              {...register("password")}
+            />
             <button
               type="button"
               onClick={() => setShowPw((v) => !v)}
@@ -88,8 +114,16 @@ export default function ResetPasswordPage() {
           <Label htmlFor="confirmPassword" className="font-semibold">
             Confirm password
           </Label>
-          <Input id="confirmPassword" type={showPw ? "text" : "password"} placeholder="Repeat password" className="h-11 rounded-full" {...register("confirmPassword")} />
-          {errors.confirmPassword && <p className="text-xs text-destructive font-medium">{errors.confirmPassword.message}</p>}
+          <Input
+            id="confirmPassword"
+            type={showPw ? "text" : "password"}
+            placeholder="Repeat password"
+            className="h-11 rounded-full"
+            {...register("confirmPassword")}
+          />
+          {errors.confirmPassword && (
+            <p className="text-xs text-destructive font-medium">{errors.confirmPassword.message}</p>
+          )}
         </div>
 
         <div className="rounded-xl bg-muted/40 p-3 flex items-start gap-2 text-xs text-muted-foreground">
@@ -108,5 +142,19 @@ export default function ResetPasswordPage() {
         </Button>
       </form>
     </AuthLayout>
+  );
+}
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      }
+    >
+      <ResetPasswordForm />
+    </Suspense>
   );
 }

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
+import { FeaturedRoomsSection } from "@/components/featured-rooms-section";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -32,46 +33,6 @@ const facilities = [
   { icon: ShieldCheck, label: "24/7 Security & CCTV" },
   { icon: Zap, label: "Power Backup" },
   { icon: Droplet, label: "RO Drinking Water" },
-];
-
-const rooms = [
-  {
-    type: "2 Seater",
-    price: 6499,
-    capacity: "2 residents",
-    img: "/assets/room-2seater.jpg",
-    desc: "Spacious shared room ideal for friends or focused professionals seeking comfort and privacy.",
-    featured: true,
-    perks: ["Attached Bathroom", "Study Table", "Wardrobe", "WiFi", "Daily Cleaning"],
-  },
-  {
-    type: "3 Seater",
-    price: 5499,
-    capacity: "3 residents",
-    img: "/assets/room-3seater.jpg",
-    desc: "Bright and roomy triple sharing — the sweet spot of affordability and personal space.",
-    featured: true,
-    perks: ["Attached Bathroom", "Study Table", "Wardrobe", "WiFi", "Laundry"],
-  },
-  {
-    type: "4 Seater",
-    price: 4499,
-    capacity: "4 residents",
-    img: "/assets/room-4seater.jpg",
-    desc: "Most affordable seat-sharing — perfect for students who love a community vibe.",
-    featured: true,
-    badge: "Most Popular",
-    perks: ["Common Bathroom", "Study Desks", "Lockers", "WiFi", "Power Backup"],
-  },
-  {
-    type: "Private Room",
-    price: 11999,
-    capacity: "1 resident",
-    img: "/assets/room-private.jpg",
-    desc: "Your own private retreat with attached bathroom — for those who want it all to themselves.",
-    featured: false,
-    perks: ["Attached Bathroom", "Study Setup", "Wardrobe", "Premium WiFi"],
-  },
 ];
 
 const reasons = [
@@ -195,98 +156,16 @@ export default function HomePage() {
           <p className="mt-4 text-muted-foreground text-lg">Transparent monthly pricing per seat. Move in any day. No brokerage, ever.</p>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {rooms
-            .filter((r) => r.featured)
-            .map((r) => (
-              <Card
-                key={r.type}
-                className="group overflow-hidden rounded-3xl border-2 hover:border-primary/50 transition-all hover:-translate-y-1 hover:shadow-[var(--shadow-card)] p-0"
-              >
-                <div className="relative aspect-[4/3] overflow-hidden">
-                  <img
-                    src={r.img}
-                    alt={`${r.type} hostel room`}
-                    loading="lazy"
-                    width={800}
-                    height={600}
-                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                  />
-                  {r.badge && (
-                    <Badge className="absolute top-4 left-4 bg-accent text-accent-foreground border-0 font-bold rounded-full">
-                      {r.badge}
-                    </Badge>
-                  )}
-                  <div className="absolute top-4 right-4 rounded-full bg-card/95 backdrop-blur px-3 py-1.5 text-xs font-bold flex items-center gap-1">
-                    <Users className="h-3.5 w-3.5" /> {r.capacity}
-                  </div>
-                </div>
-                <CardContent className="p-6 space-y-4">
-                  <div className="flex items-baseline justify-between">
-                    <h3 className="text-2xl font-extrabold">{r.type}</h3>
-                    <div className="text-right">
-                      <div className="text-2xl font-extrabold text-primary">₹{r.price.toLocaleString()}</div>
-                      <div className="text-xs text-muted-foreground">/seat / month</div>
-                    </div>
-                  </div>
-                  <p className="text-sm text-muted-foreground">{r.desc}</p>
-                  <ul className="space-y-1.5">
-                    {r.perks.map((p) => (
-                      <li key={p} className="flex items-center gap-2 text-sm">
-                        <Check className="h-4 w-4 text-primary shrink-0" /> {p}
-                      </li>
-                    ))}
-                  </ul>
-                  <Button className="w-full rounded-full font-bold mt-2">Book This Seat</Button>
-                </CardContent>
-              </Card>
-            ))}
+        <FeaturedRoomsSection />
+
+        <div className="mt-10 text-center">
+          <Button asChild size="lg" variant="outline" className="rounded-full font-bold">
+            <Link href="/rooms">
+              View all rooms <ArrowRight className="ml-2 h-4 w-4" />
+            </Link>
+          </Button>
         </div>
 
-        <div className="mt-10">
-          {rooms
-            .filter((r) => !r.featured)
-            .map((r) => (
-              <Card key={r.type} className="overflow-hidden rounded-3xl border bg-muted/30 p-0">
-                <div className="grid md:grid-cols-2">
-                  <div className="relative aspect-[4/3] md:aspect-auto overflow-hidden">
-                    <img
-                      src={r.img}
-                      alt={`${r.type} private hostel room`}
-                      loading="lazy"
-                      width={800}
-                      height={600}
-                      className="h-full w-full object-cover"
-                    />
-                  </div>
-                  <CardContent className="p-8 md:p-10 flex flex-col justify-center space-y-4">
-                    <Badge variant="outline" className="w-fit rounded-full">
-                      Premium
-                    </Badge>
-                    <h3 className="text-3xl font-extrabold">{r.type}</h3>
-                    <p className="text-muted-foreground">{r.desc}</p>
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-4xl font-extrabold text-primary">₹{r.price.toLocaleString()}</span>
-                      <span className="text-sm text-muted-foreground">/ month</span>
-                    </div>
-                    <ul className="grid grid-cols-2 gap-2">
-                      {r.perks.map((p) => (
-                        <li key={p} className="flex items-center gap-2 text-sm">
-                          <Check className="h-4 w-4 text-primary" /> {p}
-                        </li>
-                      ))}
-                    </ul>
-                    <div className="flex gap-3 pt-2">
-                      <Button className="rounded-full font-bold">Book Private Room</Button>
-                      <Button variant="outline" className="rounded-full font-bold">
-                        View Details
-                      </Button>
-                    </div>
-                  </CardContent>
-                </div>
-              </Card>
-            ))}
-        </div>
       </section>
 
       <section id="facilities" className="bg-muted/40 py-20">

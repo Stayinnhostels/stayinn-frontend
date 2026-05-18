@@ -1,3 +1,7 @@
+export const ROOM_TYPES = ["2 Seater", "3 Seater", "4 Seater", "Private"] as const;
+export type RoomCategory = (typeof ROOM_TYPES)[number];
+
+/** @deprecated Use `MarketingRoom` from `@/lib/rooms-api` and fetch from the API */
 export type Room = {
   id: string;
   type: string;
@@ -10,6 +14,7 @@ export type Room = {
   badge?: string;
 };
 
+/** Static fallback when API is unavailable (dev offline) */
 export const ROOMS: Room[] = [
   {
     id: "twin-deluxe",
@@ -75,7 +80,6 @@ export const ROOMS: Room[] = [
   },
 ];
 
-export const ROOM_TYPES = ["2 Seater", "3 Seater", "4 Seater", "Private"] as const;
 export const AMENITY_LIST = [
   "Attached Bathroom",
   "AC",

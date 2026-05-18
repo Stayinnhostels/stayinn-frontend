@@ -1,11 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Eye, EyeOff, Loader2, Mail, Lock } from "lucide-react";
 import { AuthLayout } from "@/components/auth/auth-layout";
@@ -15,19 +15,37 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useAuth } from "@/lib/auth-context";
-import { dashboardHref } from "@/lib/app-links";
+import { readReturnPathFromSearch, safeReturnPath, signupHref } from "@/lib/auth-redirect";
 
 const schema = z.object({
   email: z.string().trim().email("Enter a valid email").max(120),
-  password: z.string().min(6, "At least 6 characters").max(72),
+  password: z.string().min(1, "Password is required").max(200),
   remember: z.boolean().optional(),
 });
 type FormValues = z.infer<typeof schema>;
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
-  const { login } = useAuth();
+  const searchParams = useSearchParams();
+  const { user, loading, login } = useAuth();
   const [showPw, setShowPw] = useState(false);
+
+  const returnTo = useMemo(
+    () => safeReturnPath(readReturnPathFromSearch(searchParams)),
+    [searchParams],
+  );
+
+  useEffect(() => {
+    if (searchParams.get("verified") === "1") {
+      toast.success("Email verified! You can sign in now.");
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
+    if (!loading && user) {
+      router.replace(returnTo);
+    }
+  }, [loading, user, returnTo, router]);
 
   const {
     register,
@@ -42,20 +60,32 @@ export default function LoginPage() {
     try {
       await login(values.email, values.password, values.remember);
       toast.success("Welcome back!");
-      router.push(dashboardHref());
+      router.replace(returnTo);
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Sign in failed");
+      const msg = e instanceof Error ? e.message : "Sign in failed";
+      toast.error(msg);
+      if (msg.toLowerCase().includes("verify")) {
+        router.push("/verify-email");
+      }
     }
   };
+
+  if (loading || user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
     <AuthLayout
       title="Welcome back"
-      subtitle="Sign in to continue managing your seat and stays."
+      subtitle="Sign in to book seats and manage your stays."
       footer={
         <>
           New here?{" "}
-          <Link href="/signup" className="font-bold text-primary hover:underline">
+          <Link href={signupHref(returnTo)} className="font-bold text-primary hover:underline">
             Create an account
           </Link>
         </>
@@ -132,5 +162,19 @@ export default function LoginPage() {
         </Button>
       </form>
     </AuthLayout>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      }
+    >
+      <LoginForm />
+    </Suspense>
   );
 }

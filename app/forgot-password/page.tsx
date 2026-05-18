@@ -59,9 +59,6 @@ export default function ForgotPasswordPage() {
           <Button type="button" onClick={() => setSent(null)} variant="outline" className="w-full rounded-full font-bold h-11">
             Try a different email
           </Button>
-          <Button asChild className="w-full rounded-full font-bold h-11 shadow-[var(--shadow-soft)]">
-            <Link href="/reset-password">Continue → demo reset</Link>
-          </Button>
         </div>
       ) : (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
