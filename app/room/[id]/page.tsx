@@ -7,6 +7,7 @@ import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { RoomReviewsSection } from "@/components/room-reviews-section";
 import { fetchRoomById, formatSeatsFree, isRoomListedOnSite, type MarketingRoom } from "@/lib/rooms-api";
 import { ArrowLeft, BedDouble, Check, Loader2, MapPin, ShieldCheck, Sparkles, Users } from "lucide-react";
 
@@ -219,6 +220,8 @@ export default function RoomDetailPage() {
           </ul>
         </div>
       </section>
+
+      <RoomReviewsSection roomId={room.id} roomTitle={room.title} />
 
       <section className="container mx-auto my-16 px-4">
         <div className="rounded-3xl bg-[image:var(--gradient-hero)] p-10 text-center text-primary-foreground shadow-[var(--shadow-card)] md:p-14">

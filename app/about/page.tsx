@@ -5,6 +5,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Heart, ShieldCheck, Sparkles, Users } from "lucide-react";
+import { AboutIntro } from "@/components/about-intro";
 
 export const metadata: Metadata = {
   title: "About — Stay Inn Hostels",
@@ -31,9 +32,7 @@ export default function AboutPage() {
           <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight leading-[1.05]">
             Hostel living, <span className="bg-[image:var(--gradient-hero)] bg-clip-text text-transparent">reimagined.</span>
           </h1>
-          <p className="mt-6 text-lg text-muted-foreground max-w-2xl">
-            Stay Inn started with a simple idea: students and young professionals deserve clean, safe and affordable places to live — without the hassle of brokers, deposits or hidden fees. Today we host 2,500+ residents across 12 locations, and we&apos;re just getting started.
-          </p>
+          <AboutIntro />
         </div>
       </section>
 

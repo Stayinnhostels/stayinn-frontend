@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
+import { HomeHero } from "@/components/home-hero";
 import { FeaturedRoomsSection } from "@/components/featured-rooms-section";
+import { ReviewsSection } from "@/components/reviews-section";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -58,24 +60,6 @@ const reasons = [
   },
 ];
 
-const testimonials = [
-  {
-    name: "Aarav Mehta",
-    role: "Engineering Student",
-    text: "Best decision ever. Clean rooms, fast WiFi and the staff actually cares. Feels like a second home.",
-  },
-  {
-    name: "Priya Sharma",
-    role: "Working Professional",
-    text: "Safe, affordable and located right next to my office. The 2-seater room is honestly luxurious for the price.",
-  },
-  {
-    name: "Rohan Verma",
-    role: "MBA Student",
-    text: "Loved the community here. Made lifelong friends, never missed a meal, and study lounges are top notch.",
-  },
-];
-
 export default function HomePage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -85,26 +69,7 @@ export default function HomePage() {
         <div className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top_right,oklch(0.85_0.18_90/0.4),transparent_60%)]" />
         <div className="container mx-auto grid gap-12 px-4 py-16 md:py-24 lg:grid-cols-2 lg:items-center">
           <div className="space-y-7 animate-fade-in">
-            <Badge className="rounded-full bg-accent text-accent-foreground hover:bg-accent border-0 px-4 py-1.5 text-xs font-bold">
-              <Sparkles className="mr-1.5 h-3.5 w-3.5" /> Now booking for 2026
-            </Badge>
-            <h1 className="text-4xl font-extrabold leading-[1.05] tracking-tight md:text-6xl lg:text-7xl">
-              Comfortable Hostel Living,{" "}
-              <span className="bg-[image:var(--gradient-hero)] bg-clip-text text-transparent">Seat by Seat.</span>
-            </h1>
-            <p className="max-w-xl text-lg text-muted-foreground md:text-xl">
-              Affordable, secure and spotlessly clean accommodation built for students and working professionals. Pick your seat — we handle the rest.
-            </p>
-            <div className="flex flex-wrap gap-3">
-              <Button asChild size="lg" className="rounded-full px-7 font-bold shadow-[var(--shadow-glow)] hover:scale-105 transition-transform">
-                <Link href="/booking">
-                  Book Your Seat <ArrowRight className="ml-1 h-4 w-4" />
-                </Link>
-              </Button>
-              <Button asChild size="lg" variant="outline" className="rounded-full px-7 font-bold border-2">
-                <Link href="/rooms">Explore Rooms</Link>
-              </Button>
-            </div>
+            <HomeHero />
             <div className="flex items-center gap-6 pt-4">
               <div>
                 <div className="text-2xl font-extrabold">2,500+</div>
@@ -214,37 +179,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section id="reviews" className="bg-muted/40 py-20">
-        <div className="container mx-auto px-4">
-          <div className="mx-auto max-w-2xl text-center mb-14">
-            <Badge variant="outline" className="rounded-full border-accent text-accent-foreground font-bold mb-4 bg-accent/30">
-              TESTIMONIALS
-            </Badge>
-            <h2 className="text-4xl font-extrabold tracking-tight md:text-5xl">Loved by 2,500+ residents</h2>
-          </div>
-          <div className="grid gap-6 md:grid-cols-3">
-            {testimonials.map((t) => (
-              <Card key={t.name} className="rounded-3xl p-7 border-2 hover:shadow-[var(--shadow-card)] transition-shadow">
-                <div className="flex gap-0.5 mb-4">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="h-4 w-4 fill-accent text-accent" />
-                  ))}
-                </div>
-                <p className="text-foreground/90 leading-relaxed mb-6">&quot;{t.text}&quot;</p>
-                <div className="flex items-center gap-3 pt-4 border-t">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[image:var(--gradient-hero)] text-primary-foreground font-extrabold">
-                    {t.name.charAt(0)}
-                  </div>
-                  <div>
-                    <div className="font-bold">{t.name}</div>
-                    <div className="text-xs text-muted-foreground">{t.role}</div>
-                  </div>
-                </div>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
+      <ReviewsSection />
 
       <section className="container mx-auto px-4 py-20">
         <div className="relative overflow-hidden rounded-[2.5rem] bg-[image:var(--gradient-hero)] p-10 md:p-16 text-primary-foreground shadow-[var(--shadow-glow)]">

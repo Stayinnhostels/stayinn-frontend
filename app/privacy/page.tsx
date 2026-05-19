@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { Badge } from "@/components/ui/badge";
+import { LegalContactNote } from "@/components/legal-contact-note";
 
 export const metadata: Metadata = {
   title: "Privacy Policy — Stay Inn Hostels",
@@ -84,9 +85,7 @@ export default function PrivacyPage() {
         </Section>
 
         <Section title="10. Contact Us">
-          <p>
-            Questions or concerns? Email <span className="text-primary font-semibold">privacy@stayinn.example</span> or write to Stay Inn HQ, MG Road, Bengaluru, KA 560001, India.
-          </p>
+          <LegalContactNote />
         </Section>
       </section>
 

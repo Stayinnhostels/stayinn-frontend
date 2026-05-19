@@ -1,22 +1,27 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { Providers } from "@/components/providers";
+import { fetchPublicSiteSettings } from "@/lib/site-settings";
 
-export const metadata: Metadata = {
-  title: "Stay Inn Hostels — Comfortable Hostel Living, Seat by Seat",
-  description:
-    "Affordable, secure & clean seat-based hostel accommodation for students and working professionals. WiFi, laundry, security & more.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const settings = await fetchPublicSiteSettings();
+  return {
+    title: `${settings.hotelName} — ${settings.tagline}`,
+    description: settings.description,
+  };
+}
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const siteSettings = await fetchPublicSiteSettings();
+
   return (
     <html lang="en" className="h-full antialiased">
       <body className="min-h-full flex flex-col">
-        <Providers>{children}</Providers>
+        <Providers initialSiteSettings={siteSettings}>{children}</Providers>
       </body>
     </html>
   );

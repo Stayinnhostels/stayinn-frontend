@@ -17,12 +17,15 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { LogOut, Menu, User } from "lucide-react";
+import { useSiteSettings } from "@/components/site-settings-provider";
+import { brandShortName } from "@/lib/site-settings";
 
 const nav = [
   { href: "/", label: "Home" },
   { href: "/rooms", label: "Rooms" },
   { href: "/about", label: "About Us" },
   { href: "/facilities", label: "Facilities" },
+  { href: "/booking-rules", label: "Booking Rules" },
   { href: "/faq", label: "FAQ" },
   { href: "/contact", label: "Contact Us" },
 ] as const;
@@ -41,6 +44,8 @@ function NavLink({ href, label, exact }: { href: string; label: string; exact?: 
 }
 
 function SiteHeaderInner() {
+  const { hotelName } = useSiteSettings();
+  const brand = brandShortName(hotelName);
   const { user, logout, isAdmin } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
@@ -54,10 +59,11 @@ function SiteHeaderInner() {
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <Link href="/" className="flex items-center gap-2">
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[image:var(--gradient-hero)] text-primary-foreground font-black">
-            S
+            {brand.charAt(0).toUpperCase()}
           </div>
           <span className="text-lg font-extrabold tracking-tight">
-            Stay Inn<span className="text-primary">.</span>
+            {brand}
+            <span className="text-primary">.</span>
           </span>
         </Link>
         <nav className="hidden lg:flex items-center gap-8 text-sm font-medium">
