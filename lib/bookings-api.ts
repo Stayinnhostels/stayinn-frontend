@@ -21,6 +21,9 @@ export type BookingResult = {
   check_out: string;
   price_per_seat: number;
   total_amount: number;
+  original_total?: number | null;
+  discount_amount?: number | null;
+  coupon_code?: string | null;
   status: string;
 };
 
@@ -33,6 +36,7 @@ export type CreateBookingInput = {
   months: number;
   move_in: string;
   notes?: string;
+  coupon_code?: string;
 };
 
 type CreateBookingResponse = {

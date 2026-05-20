@@ -11,9 +11,21 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { MessageCircle, Phone, Calendar, Users, Check, Loader2, Minus, Plus } from "lucide-react";
+import {
+  MessageCircle,
+  Phone,
+  Calendar,
+  Users,
+  Check,
+  Loader2,
+  Minus,
+  Plus,
+  Tag,
+  X,
+} from "lucide-react";
 import { fetchRooms, formatSeatsFree, type MarketingRoom } from "@/lib/rooms-api";
 import { createBookingApi, type BookingContact, type BookingResult } from "@/lib/bookings-api";
+import { validateCouponApi, type ValidateCouponResult } from "@/lib/coupons-api";
 import { formatPhoneForDisplay, resolvePropertyContact } from "@/lib/property-contact";
 
 function BookingForm() {
@@ -28,6 +40,10 @@ function BookingForm() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<{ booking: BookingResult; contact: BookingContact } | null>(null);
+  const [couponInput, setCouponInput] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState<ValidateCouponResult | null>(null);
+  const [couponError, setCouponError] = useState<string | null>(null);
+  const [validatingCoupon, setValidatingCoupon] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -53,11 +69,49 @@ function BookingForm() {
     if (room) setSeats((s) => Math.min(Math.max(1, s), room.beds_available));
   }, [room?.id, room?.beds_available]);
 
-  const subtotal = room ? room.price * seats * months : 0;
+  const listTotal = room ? room.price * seats * months : 0;
+  const discountAmount = appliedCoupon?.discount_amount ?? 0;
+  const totalDue = appliedCoupon?.total_amount ?? listTotal;
+
+  useEffect(() => {
+    setAppliedCoupon(null);
+    setCouponError(null);
+  }, [room?.id, seats, months]);
+
+  const applyCoupon = async () => {
+    if (!room || !couponInput.trim()) return;
+    setCouponError(null);
+    setValidatingCoupon(true);
+    try {
+      const result = await validateCouponApi({
+        code: couponInput.trim(),
+        room_id: room.id,
+        seats_booked: seats,
+        months,
+      });
+      setAppliedCoupon(result);
+      setCouponInput(result.coupon.code);
+    } catch (err) {
+      setAppliedCoupon(null);
+      setCouponError(err instanceof Error ? err.message : "Invalid coupon");
+    } finally {
+      setValidatingCoupon(false);
+    }
+  };
+
+  const clearCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponInput("");
+    setCouponError(null);
+  };
 
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!room) return;
+    if (couponInput.trim() && !appliedCoupon) {
+      setError("Please apply your promo code before submitting, or clear the code field.");
+      return;
+    }
     setError(null);
     setSubmitting(true);
     const fd = new FormData(e.currentTarget);
@@ -71,6 +125,7 @@ function BookingForm() {
         guest_email: String(fd.get("email") ?? ""),
         guest_phone: String(fd.get("phone") ?? ""),
         notes: String(fd.get("notes") ?? "") || undefined,
+        coupon_code: appliedCoupon?.coupon.code,
       });
       setSuccess({ booking: result.booking, contact: result.contact });
     } catch (err) {
@@ -98,7 +153,21 @@ function BookingForm() {
             <p className="mt-3 text-muted-foreground">
               {booking.seats_booked} seat(s) in <strong className="text-foreground">{booking.room_title}</strong> · ₹
               {booking.total_amount.toLocaleString("en-IN")} for {booking.months} month(s)
+              {booking.coupon_code && (
+                <>
+                  {" "}
+                  <span className="text-primary">(coupon {booking.coupon_code} applied)</span>
+                </>
+              )}
             </p>
+            {booking.discount_amount != null && booking.discount_amount > 0 && (
+              <p className="mt-1 text-sm text-emerald-600">
+                You saved ₹{booking.discount_amount.toLocaleString("en-IN")}
+                {booking.original_total != null && (
+                  <> off ₹{booking.original_total.toLocaleString("en-IN")}</>
+                )}
+              </p>
+            )}
             <p className="mt-2 text-sm text-muted-foreground">
               Move-in: {booking.move_in} · Reference #{booking.id.slice(-8).toUpperCase()}
             </p>
@@ -292,7 +361,51 @@ function BookingForm() {
             </Card>
 
             <Card className="space-y-5 rounded-3xl border-2 p-7">
-              <h2 className="text-xl font-extrabold">2. Your details</h2>
+              <h2 className="text-xl font-extrabold flex items-center gap-2">
+                <Tag className="h-5 w-5 text-primary" />
+                2. Promo code
+              </h2>
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <Input
+                  value={couponInput}
+                  onChange={(e) => {
+                    setCouponInput(e.target.value.toUpperCase());
+                    if (appliedCoupon) setAppliedCoupon(null);
+                    setCouponError(null);
+                  }}
+                  placeholder="e.g. WELCOME10"
+                  className="font-mono uppercase"
+                  disabled={Boolean(appliedCoupon)}
+                />
+                {appliedCoupon ? (
+                  <Button type="button" variant="outline" className="rounded-full shrink-0" onClick={clearCoupon}>
+                    <X className="h-4 w-4" /> Remove
+                  </Button>
+                ) : (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="rounded-full shrink-0 font-bold"
+                    disabled={!couponInput.trim() || validatingCoupon || !room}
+                    onClick={() => void applyCoupon()}
+                  >
+                    {validatingCoupon ? "Checking…" : "Apply"}
+                  </Button>
+                )}
+              </div>
+              {appliedCoupon && (
+                <p className="text-sm font-semibold text-emerald-600">
+                  {appliedCoupon.coupon.code} applied — you save ₹
+                  {appliedCoupon.discount_amount.toLocaleString("en-IN")}
+                </p>
+              )}
+              {couponError && (
+                <p className="text-sm font-medium text-destructive">{couponError}</p>
+              )}
+            </Card>
+
+            <Card className="space-y-5 rounded-3xl border-2 p-7">
+              <h2 className="text-xl font-extrabold">3. Your details</h2>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
                   <Label className="mb-2 block text-sm font-bold">Full name</Label>
@@ -327,7 +440,7 @@ function BookingForm() {
               disabled={submitting || room.beds_available < 1}
               className="w-full rounded-full font-bold shadow-[var(--shadow-soft)]"
             >
-              {submitting ? "Submitting…" : `Request booking · ₹${subtotal.toLocaleString("en-IN")}`}
+              {submitting ? "Submitting…" : `Request booking · ₹${totalDue.toLocaleString("en-IN")}`}
             </Button>
             <p className="text-center text-xs text-muted-foreground">
               You won&apos;t be charged online. We&apos;ll share WhatsApp & phone to confirm.
@@ -355,11 +468,22 @@ function BookingForm() {
                     <span className="text-muted-foreground">
                       ₹{room.price.toLocaleString()} × {seats} seat × {months} mo
                     </span>
-                    <span className="font-semibold">₹{subtotal.toLocaleString("en-IN")}</span>
+                    <span className="font-semibold">₹{listTotal.toLocaleString("en-IN")}</span>
                   </div>
+                  {discountAmount > 0 && appliedCoupon && (
+                    <div className="flex justify-between text-emerald-600">
+                      <span>
+                        Coupon ({appliedCoupon.coupon.code})
+                        {appliedCoupon.coupon.discount_type === "percent"
+                          ? ` −${appliedCoupon.coupon.discount_value}%`
+                          : ""}
+                      </span>
+                      <span className="font-semibold">−₹{discountAmount.toLocaleString("en-IN")}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between border-t pt-2 text-lg font-extrabold">
                     <span>Total</span>
-                    <span className="text-primary">₹{subtotal.toLocaleString("en-IN")}</span>
+                    <span className="text-primary">₹{totalDue.toLocaleString("en-IN")}</span>
                   </div>
                 </div>
               </CardContent>
