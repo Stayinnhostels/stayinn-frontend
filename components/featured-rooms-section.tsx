@@ -6,17 +6,21 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Check, Loader2, Users } from "lucide-react";
+import { useCurrency } from "@/components/currency-provider";
 import { fetchRooms, formatSeatsFree, type MarketingRoom } from "@/lib/rooms-api";
 
 export function FeaturedRoomsSection() {
+  const { currency, formatPrice, ready } = useCurrency();
   const [rooms, setRooms] = useState<MarketingRoom[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!ready) return;
     let cancelled = false;
     (async () => {
+      setLoading(true);
       try {
-        const list = await fetchRooms({ limit: 12 });
+        const list = await fetchRooms({ limit: 12, currency });
         if (!cancelled) setRooms(list);
       } catch {
         if (!cancelled) setRooms([]);
@@ -27,7 +31,7 @@ export function FeaturedRoomsSection() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [currency, ready]);
 
   if (loading) {
     return (
@@ -79,7 +83,7 @@ export function FeaturedRoomsSection() {
                 <div className="mt-0.5 text-xs text-muted-foreground">{r.type}</div>
               </div>
               <div className="text-right">
-                <div className="text-2xl font-extrabold text-primary">₹{r.price.toLocaleString("en-IN")}</div>
+                <div className="text-2xl font-extrabold text-primary">{formatPrice(r.price)}</div>
                 <div className="text-xs text-muted-foreground">/seat / month</div>
               </div>
             </div>

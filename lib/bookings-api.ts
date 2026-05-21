@@ -1,4 +1,5 @@
 import { apiFetch } from "@/lib/api-client";
+import type { DisplayCurrency } from "@/lib/currency";
 import type { MarketingRoom } from "@/lib/rooms-api";
 
 export type BookingContact = {
@@ -24,6 +25,7 @@ export type BookingResult = {
   original_total?: number | null;
   discount_amount?: number | null;
   coupon_code?: string | null;
+  currency?: DisplayCurrency;
   status: string;
 };
 
@@ -37,6 +39,7 @@ export type CreateBookingInput = {
   move_in: string;
   notes?: string;
   coupon_code?: string;
+  currency?: DisplayCurrency;
 };
 
 type CreateBookingResponse = {

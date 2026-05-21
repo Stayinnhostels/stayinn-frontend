@@ -8,10 +8,12 @@ import { SiteFooter } from "@/components/site-footer";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { RoomReviewsSection } from "@/components/room-reviews-section";
+import { useCurrency } from "@/components/currency-provider";
 import { fetchRoomById, formatSeatsFree, isRoomListedOnSite, type MarketingRoom } from "@/lib/rooms-api";
 import { ArrowLeft, BedDouble, Check, Loader2, MapPin, ShieldCheck, Sparkles, Users } from "lucide-react";
 
 export default function RoomDetailPage() {
+  const { currency, formatPrice, ready } = useCurrency();
   const params = useParams();
   const id = typeof params.id === "string" ? params.id : params.id?.[0];
   const [room, setRoom] = useState<MarketingRoom | null>(null);
@@ -19,14 +21,14 @@ export default function RoomDetailPage() {
   const [active, setActive] = useState(0);
 
   useEffect(() => {
-    if (!id) {
-      setLoading(false);
+    if (!id || !ready) {
+      if (!id) setLoading(false);
       return;
     }
     let cancelled = false;
     (async () => {
       setLoading(true);
-      const data = await fetchRoomById(id);
+      const data = await fetchRoomById(id, currency);
       if (!cancelled) {
         setRoom(data);
         setActive(0);
@@ -36,7 +38,7 @@ export default function RoomDetailPage() {
     return () => {
       cancelled = true;
     };
-  }, [id]);
+  }, [id, currency, ready]);
 
   if (loading) {
     return (
@@ -143,7 +145,7 @@ export default function RoomDetailPage() {
             <div className="space-y-4 rounded-3xl border-2 bg-card p-6 shadow-[var(--shadow-card)]">
               <div className="flex items-baseline justify-between">
                 <div>
-                  <div className="text-3xl font-extrabold text-primary">₹{room.price.toLocaleString()}</div>
+                  <div className="text-3xl font-extrabold text-primary">{formatPrice(room.price)}</div>
                   <div className="text-xs text-muted-foreground">per seat / month</div>
                 </div>
                 <div className="text-right text-sm text-muted-foreground">

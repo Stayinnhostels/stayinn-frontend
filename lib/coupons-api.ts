@@ -1,4 +1,5 @@
 import { apiFetch } from "@/lib/api-client";
+import type { DisplayCurrency } from "@/lib/currency";
 
 export type CouponPreview = {
   code: string;
@@ -12,6 +13,7 @@ export type ValidateCouponInput = {
   room_id: string;
   seats_booked: number;
   months: number;
+  currency?: DisplayCurrency;
 };
 
 export type ValidateCouponResult = {

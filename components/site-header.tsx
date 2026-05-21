@@ -19,6 +19,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { LogOut, Menu, User } from "lucide-react";
 import { useSiteSettings } from "@/components/site-settings-provider";
 import { brandShortName } from "@/lib/site-settings";
+import { CurrencyToggle } from "@/components/currency-toggle";
 
 const nav = [
   { href: "/", label: "Home" },
@@ -72,6 +73,7 @@ function SiteHeaderInner() {
           ))}
         </nav>
         <div className="flex items-center gap-2">
+          <CurrencyToggle className="hidden sm:flex" />
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

@@ -19,8 +19,8 @@ export default async function RootLayout({
   const siteSettings = await fetchPublicSiteSettings();
 
   return (
-    <html lang="en" className="h-full antialiased">
-      <body className="min-h-full flex flex-col">
+    <html lang="en" className="h-full antialiased" suppressHydrationWarning>
+      <body className="min-h-full flex flex-col" suppressHydrationWarning>
         <Providers initialSiteSettings={siteSettings}>{children}</Providers>
       </body>
     </html>

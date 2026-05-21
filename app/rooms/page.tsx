@@ -11,6 +11,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
 import { Users, Check, SlidersHorizontal, Loader2 } from "lucide-react";
+import { useCurrency } from "@/components/currency-provider";
 import {
   AMENITY_LIST,
   ROOM_TYPES,
@@ -20,6 +21,7 @@ import {
 } from "@/lib/rooms-api";
 
 export default function RoomsPage() {
+  const { currency, formatPrice, ready } = useCurrency();
   const [rooms, setRooms] = useState<MarketingRoom[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -29,12 +31,13 @@ export default function RoomsPage() {
   const [amenities, setAmenities] = useState<string[]>([]);
 
   useEffect(() => {
+    if (!ready) return;
     let cancelled = false;
     (async () => {
       setLoading(true);
       setLoadError(null);
       try {
-        const list = await fetchRooms({ limit: 100 });
+        const list = await fetchRooms({ limit: 100, currency });
         if (!cancelled) {
           setRooms(list);
           if (list.length > 0) {
@@ -53,7 +56,7 @@ export default function RoomsPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [currency, ready]);
 
   const toggle = (arr: string[], v: string, set: (a: string[]) => void) =>
     set(arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v]);
@@ -120,8 +123,8 @@ export default function RoomsPage() {
               onValueChange={(v) => setPrice([v[0], v[1]] as [number, number])}
             />
             <div className="flex justify-between text-xs text-muted-foreground">
-              <span>₹{price[0].toLocaleString()}</span>
-              <span>₹{price[1].toLocaleString()}</span>
+              <span>{formatPrice(price[0])}</span>
+              <span>{formatPrice(price[1])}</span>
             </div>
           </div>
 
@@ -234,7 +237,7 @@ export default function RoomsPage() {
                         <div className="mt-0.5 text-xs text-muted-foreground">{r.type}</div>
                       </div>
                       <div className="text-right">
-                        <div className="text-xl font-extrabold text-primary">₹{r.price.toLocaleString()}</div>
+                        <div className="text-xl font-extrabold text-primary">{formatPrice(r.price)}</div>
                         <div className="text-xs text-muted-foreground">/seat / month</div>
                       </div>
                     </div>

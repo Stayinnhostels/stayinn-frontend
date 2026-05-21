@@ -1,5 +1,6 @@
 import { apiFetch } from "@/lib/api-client";
 import { AMENITY_LIST, ROOM_TYPES } from "@/lib/rooms-data";
+import type { DisplayCurrency } from "@/lib/currency";
 
 export type { RoomCategory } from "@/lib/rooms-data";
 export { AMENITY_LIST, ROOM_TYPES };
@@ -9,6 +10,9 @@ export type ApiRoom = {
   title: string;
   description: string;
   price_per_night: number;
+  price_per_night_usd: number;
+  price_per_night_pkr: number;
+  currency: DisplayCurrency;
   status: string;
   category: string;
   capacity: number;
@@ -25,6 +29,9 @@ export type MarketingRoom = {
   type: string;
   title: string;
   price: number;
+  price_usd: number;
+  price_pkr: number;
+  currency: DisplayCurrency;
   capacity: number;
   beds_total: number;
   beds_available: number;
@@ -59,6 +66,9 @@ export function mapApiRoomToMarketing(room: ApiRoom): MarketingRoom {
     type: room.category,
     title: room.title,
     price: room.price_per_night,
+    price_usd: room.price_per_night_usd,
+    price_pkr: room.price_per_night_pkr,
+    currency: room.currency,
     capacity: room.capacity,
     beds_total: room.beds_total,
     beds_available: room.beds_available,
@@ -82,10 +92,13 @@ type GetRoomResponse = {
 };
 
 /** Bookable rooms only (hidden when all seats are taken; reappear when seats free up). */
-export async function fetchRooms(params?: { limit?: number }): Promise<MarketingRoom[]> {
+export async function fetchRooms(
+  params?: { limit?: number; currency?: DisplayCurrency },
+): Promise<MarketingRoom[]> {
   const search = new URLSearchParams();
   search.set("limit", String(params?.limit ?? 100));
   search.set("bookable", "true");
+  if (params?.currency) search.set("currency", params.currency);
 
   const data = await apiFetch<ListRoomsResponse>(`/api/v1/rooms?${search.toString()}`);
   if (!data.success || !Array.isArray(data.rooms)) {
@@ -95,12 +108,17 @@ export async function fetchRooms(params?: { limit?: number }): Promise<Marketing
   return data.rooms.map(mapApiRoomToMarketing).filter(isRoomListedOnSite);
 }
 
-export async function fetchRoomById(id: string): Promise<MarketingRoom | null> {
+export async function fetchRoomById(
+  id: string,
+  currency?: DisplayCurrency,
+): Promise<MarketingRoom | null> {
   try {
-    const data = await apiFetch<GetRoomResponse>(`/api/v1/rooms/${encodeURIComponent(id)}`);
+    const q = currency ? `?currency=${currency}` : "";
+    const data = await apiFetch<GetRoomResponse>(
+      `/api/v1/rooms/${encodeURIComponent(id)}${q}`,
+    );
     if (!data.success || !data.room) return null;
-    const room = mapApiRoomToMarketing(data.room);
-    return room;
+    return mapApiRoomToMarketing(data.room);
   } catch {
     return null;
   }

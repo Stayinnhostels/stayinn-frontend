@@ -23,12 +23,14 @@ import {
   Tag,
   X,
 } from "lucide-react";
+import { useCurrency } from "@/components/currency-provider";
 import { fetchRooms, formatSeatsFree, type MarketingRoom } from "@/lib/rooms-api";
 import { createBookingApi, type BookingContact, type BookingResult } from "@/lib/bookings-api";
 import { validateCouponApi, type ValidateCouponResult } from "@/lib/coupons-api";
 import { formatPhoneForDisplay, resolvePropertyContact } from "@/lib/property-contact";
 
 function BookingForm() {
+  const { currency, formatPrice, ready } = useCurrency();
   const searchParams = useSearchParams();
   const roomIdFromQuery = searchParams.get("roomId") ?? undefined;
 
@@ -46,10 +48,11 @@ function BookingForm() {
   const [validatingCoupon, setValidatingCoupon] = useState(false);
 
   useEffect(() => {
+    if (!ready) return;
     (async () => {
       setLoadingRooms(true);
       try {
-        const list = await fetchRooms({ limit: 100 });
+        const list = await fetchRooms({ limit: 100, currency });
         setRooms(list);
         const initial = roomIdFromQuery && list.some((r) => r.id === roomIdFromQuery) ? roomIdFromQuery : list[0]?.id ?? "";
         setSelectedId(initial);
@@ -61,7 +64,7 @@ function BookingForm() {
         setLoadingRooms(false);
       }
     })();
-  }, [roomIdFromQuery]);
+  }, [roomIdFromQuery, currency, ready]);
 
   const room = useMemo(() => rooms.find((r) => r.id === selectedId), [rooms, selectedId]);
 
@@ -76,7 +79,7 @@ function BookingForm() {
   useEffect(() => {
     setAppliedCoupon(null);
     setCouponError(null);
-  }, [room?.id, seats, months]);
+  }, [room?.id, seats, months, currency]);
 
   const applyCoupon = async () => {
     if (!room || !couponInput.trim()) return;
@@ -88,6 +91,7 @@ function BookingForm() {
         room_id: room.id,
         seats_booked: seats,
         months,
+        currency,
       });
       setAppliedCoupon(result);
       setCouponInput(result.coupon.code);
@@ -126,6 +130,7 @@ function BookingForm() {
         guest_phone: String(fd.get("phone") ?? ""),
         notes: String(fd.get("notes") ?? "") || undefined,
         coupon_code: appliedCoupon?.coupon.code,
+        currency,
       });
       setSuccess({ booking: result.booking, contact: result.contact });
     } catch (err) {
@@ -151,8 +156,8 @@ function BookingForm() {
             </div>
             <h1 className="text-3xl font-extrabold tracking-tight md:text-4xl">Booking request sent</h1>
             <p className="mt-3 text-muted-foreground">
-              {booking.seats_booked} seat(s) in <strong className="text-foreground">{booking.room_title}</strong> · ₹
-              {booking.total_amount.toLocaleString("en-IN")} for {booking.months} month(s)
+              {booking.seats_booked} seat(s) in <strong className="text-foreground">{booking.room_title}</strong> ·{" "}
+              {formatPrice(booking.total_amount)} for {booking.months} month(s)
               {booking.coupon_code && (
                 <>
                   {" "}
@@ -162,10 +167,8 @@ function BookingForm() {
             </p>
             {booking.discount_amount != null && booking.discount_amount > 0 && (
               <p className="mt-1 text-sm text-emerald-600">
-                You saved ₹{booking.discount_amount.toLocaleString("en-IN")}
-                {booking.original_total != null && (
-                  <> off ₹{booking.original_total.toLocaleString("en-IN")}</>
-                )}
+                You saved {formatPrice(booking.discount_amount)}
+                {booking.original_total != null && <> off {formatPrice(booking.original_total)}</>}
               </p>
             )}
             <p className="mt-2 text-sm text-muted-foreground">
@@ -395,8 +398,7 @@ function BookingForm() {
               </div>
               {appliedCoupon && (
                 <p className="text-sm font-semibold text-emerald-600">
-                  {appliedCoupon.coupon.code} applied — you save ₹
-                  {appliedCoupon.discount_amount.toLocaleString("en-IN")}
+                  {appliedCoupon.coupon.code} applied — you save {formatPrice(appliedCoupon.discount_amount)}
                 </p>
               )}
               {couponError && (
@@ -440,7 +442,7 @@ function BookingForm() {
               disabled={submitting || room.beds_available < 1}
               className="w-full rounded-full font-bold shadow-[var(--shadow-soft)]"
             >
-              {submitting ? "Submitting…" : `Request booking · ₹${totalDue.toLocaleString("en-IN")}`}
+              {submitting ? "Submitting…" : `Request booking · ${formatPrice(totalDue)}`}
             </Button>
             <p className="text-center text-xs text-muted-foreground">
               You won&apos;t be charged online. We&apos;ll share WhatsApp & phone to confirm.
@@ -466,9 +468,9 @@ function BookingForm() {
                 <div className="space-y-2 border-t pt-4 text-sm">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">
-                      ₹{room.price.toLocaleString()} × {seats} seat × {months} mo
+                      {formatPrice(room.price)} × {seats} seat × {months} mo
                     </span>
-                    <span className="font-semibold">₹{listTotal.toLocaleString("en-IN")}</span>
+                    <span className="font-semibold">{formatPrice(listTotal)}</span>
                   </div>
                   {discountAmount > 0 && appliedCoupon && (
                     <div className="flex justify-between text-emerald-600">
@@ -478,12 +480,12 @@ function BookingForm() {
                           ? ` −${appliedCoupon.coupon.discount_value}%`
                           : ""}
                       </span>
-                      <span className="font-semibold">−₹{discountAmount.toLocaleString("en-IN")}</span>
+                      <span className="font-semibold">−{formatPrice(discountAmount)}</span>
                     </div>
                   )}
                   <div className="flex justify-between border-t pt-2 text-lg font-extrabold">
                     <span>Total</span>
-                    <span className="text-primary">₹{totalDue.toLocaleString("en-IN")}</span>
+                    <span className="text-primary">{formatPrice(totalDue)}</span>
                   </div>
                 </div>
               </CardContent>
