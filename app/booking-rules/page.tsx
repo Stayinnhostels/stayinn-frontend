@@ -22,7 +22,7 @@ export default function BookingRulesPage() {
             </span>
           </h1>
           <p className="mt-6 text-lg text-muted-foreground max-w-2xl">
-            These policies are set by our team and kept up to date. They apply to all seat bookings and move-ins.
+            Official rules for every seat booking and move-in.
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
             <Button asChild className="rounded-full font-bold">

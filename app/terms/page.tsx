@@ -90,7 +90,7 @@ export default function TermsPage() {
 
         <Section title="10. Contact">
           <p>
-            For questions about these terms, email <span className="text-primary font-semibold">legal@stayinn.example</span>.
+            For questions about these terms, email <span className="text-primary font-semibold">info@stayinnhostels.com</span>.
           </p>
         </Section>
       </section>

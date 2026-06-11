@@ -12,7 +12,9 @@ export type ValidateCouponInput = {
   code: string;
   room_id: string;
   seats_booked: number;
-  months: number;
+  stay_unit?: "month" | "night";
+  months?: number;
+  nights?: number;
   currency?: DisplayCurrency;
 };
 

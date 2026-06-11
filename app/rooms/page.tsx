@@ -98,7 +98,7 @@ export default function RoomsPage() {
         </Badge>
         <h1 className="text-4xl font-extrabold tracking-tight md:text-5xl">Find your seat</h1>
         <p className="mt-3 max-w-xl text-muted-foreground">
-          Filter by price, room type, capacity or amenities. Book 1 seat or multiple seats in the same room.
+          Filter rooms and book one or more seats.
         </p>
       </section>
 

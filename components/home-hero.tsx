@@ -11,9 +11,9 @@ export function HomeHero() {
 
   return (
     <div className="space-y-7 animate-fade-in">
-      <Badge className="rounded-full bg-accent text-accent-foreground hover:bg-accent border-0 px-4 py-1.5 text-xs font-bold">
+      {/* <Badge className="rounded-full bg-accent text-accent-foreground hover:bg-accent border-0 px-4 py-1.5 text-xs font-bold">
         <Sparkles className="mr-1.5 h-3.5 w-3.5" /> Now booking for 2026
-      </Badge>
+      </Badge> */}
       <h1 className="text-4xl font-extrabold leading-[1.05] tracking-tight md:text-6xl lg:text-7xl">
         {hotelName}{" "}
         <span className="bg-[image:var(--gradient-hero)] bg-clip-text text-transparent">{tagline}</span>

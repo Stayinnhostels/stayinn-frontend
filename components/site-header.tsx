@@ -17,8 +17,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { LogOut, Menu, User } from "lucide-react";
+import { BrandNavLogo } from "@/components/brand-nav-logo";
+import { NAV_BAR_CLASS } from "@/lib/brand-assets";
 import { useSiteSettings } from "@/components/site-settings-provider";
-import { brandShortName } from "@/lib/site-settings";
 import { CurrencyToggle } from "@/components/currency-toggle";
 
 const nav = [
@@ -46,7 +47,6 @@ function NavLink({ href, label, exact }: { href: string; label: string; exact?: 
 
 function SiteHeaderInner() {
   const { hotelName } = useSiteSettings();
-  const brand = brandShortName(hotelName);
   const { user, logout, isAdmin } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
@@ -57,22 +57,16 @@ function SiteHeaderInner() {
 
   return (
     <header className="sticky top-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-xl">
-      <div className="container mx-auto flex h-16 items-center justify-between px-4">
-        <Link href="/" className="flex items-center gap-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[image:var(--gradient-hero)] text-primary-foreground font-black">
-            {brand.charAt(0).toUpperCase()}
-          </div>
-          <span className="text-lg font-extrabold tracking-tight">
-            {brand}
-            <span className="text-primary">.</span>
-          </span>
+      <div className={`container mx-auto ${NAV_BAR_CLASS}`}>
+        <Link href="/" className="flex shrink-0 items-center">
+          <BrandNavLogo alt={hotelName} />
         </Link>
-        <nav className="hidden lg:flex items-center gap-8 text-sm font-medium">
+        <nav className="hidden lg:flex flex-1 items-center justify-center gap-6 xl:gap-8 text-sm font-medium">
           {nav.map((n) => (
             <NavLink key={n.href} href={n.href} label={n.label} exact={n.href === "/"} />
           ))}
         </nav>
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-2">
           <CurrencyToggle className="hidden sm:flex" />
           {user ? (
             <DropdownMenu>
@@ -142,7 +136,7 @@ export function SiteHeader() {
   return (
     <Suspense
       fallback={
-        <header className="sticky top-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-xl h-16" />
+        <header className="sticky top-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-xl min-h-[5rem] sm:min-h-[5.25rem]" />
       }
     >
       <SiteHeaderInner />

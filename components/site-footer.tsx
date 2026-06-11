@@ -1,23 +1,26 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useSiteSettings } from "@/components/site-settings-provider";
-import { brandShortName } from "@/lib/site-settings";
+import { FOOTER_LOGO_CLASS, FOOTER_LOGO_SRC } from "@/lib/brand-assets";
 
 export function SiteFooter() {
-  const { hotelName, description, email, phone } = useSiteSettings();
-  const brand = brandShortName(hotelName);
-
+  const { hotelName, description, email, phone, fullAddress, address, city, country } = useSiteSettings();
+  const addressLine = fullAddress || [address, city, country].filter(Boolean).join(", ");
   return (
     <footer className="border-t bg-muted/30 mt-20">
       <div className="container mx-auto px-4 py-12 grid gap-10 md:grid-cols-4">
         <div className="space-y-3">
-          <div className="flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[image:var(--gradient-hero)] text-primary-foreground font-black">
-              {brand.charAt(0).toUpperCase()}
-            </div>
-            <span className="text-lg font-extrabold tracking-tight">{brand}.</span>
-          </div>
+          <Link href="/" className="inline-flex">
+            <Image
+              src={FOOTER_LOGO_SRC}
+              alt={hotelName}
+              width={361}
+              height={264}
+              className={FOOTER_LOGO_CLASS}
+            />
+          </Link>
           <p className="text-sm text-muted-foreground max-w-xs">{description}</p>
         </div>
         <div>
@@ -78,6 +81,7 @@ export function SiteFooter() {
         <div>
           <div className="text-sm font-bold mb-3">Contact</div>
           <ul className="space-y-2 text-sm text-muted-foreground">
+            {addressLine ? <li>{addressLine}</li> : null}
             <li>
               <a href={`mailto:${email}`} className="hover:text-primary">
                 {email}

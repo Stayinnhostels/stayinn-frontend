@@ -12,6 +12,9 @@ export type ApiRoom = {
   price_per_night: number;
   price_per_night_usd: number;
   price_per_night_pkr: number;
+  visitor_nightly_rate?: number;
+  visitor_nightly_rate_usd?: number;
+  visitor_nightly_rate_pkr?: number;
   currency: DisplayCurrency;
   status: string;
   category: string;
@@ -31,6 +34,9 @@ export type MarketingRoom = {
   price: number;
   price_usd: number;
   price_pkr: number;
+  visitor_nightly_rate: number;
+  visitor_nightly_rate_usd: number;
+  visitor_nightly_rate_pkr: number;
   currency: DisplayCurrency;
   capacity: number;
   beds_total: number;
@@ -68,6 +74,11 @@ export function mapApiRoomToMarketing(room: ApiRoom): MarketingRoom {
     price: room.price_per_night,
     price_usd: room.price_per_night_usd,
     price_pkr: room.price_per_night_pkr,
+    visitor_nightly_rate:
+      room.visitor_nightly_rate ??
+      (room.currency === "usd" ? room.visitor_nightly_rate_usd ?? 15 : room.visitor_nightly_rate_pkr ?? 1500),
+    visitor_nightly_rate_usd: room.visitor_nightly_rate_usd ?? 15,
+    visitor_nightly_rate_pkr: room.visitor_nightly_rate_pkr ?? 1500,
     currency: room.currency,
     capacity: room.capacity,
     beds_total: room.beds_total,

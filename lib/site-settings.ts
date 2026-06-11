@@ -1,5 +1,6 @@
 import { getApiBaseUrl } from "@/lib/api-client";
 import { BOOKING_RULES_DEFAULTS, type BookingRulesSettings } from "@/lib/booking-rules";
+import { DEFAULT_ACCENT_COLOR, DEFAULT_PRIMARY_COLOR } from "@/lib/site-theme";
 
 export type SiteSettings = {
   hotelName: string;
@@ -14,6 +15,8 @@ export type SiteSettings = {
   whatsapp_url: string | null;
   fullAddress: string;
   mapUrl: string;
+  primaryColor: string;
+  accentColor: string;
 } & BookingRulesSettings;
 
 export const SITE_SETTINGS_DEFAULTS: SiteSettings = {
@@ -21,15 +24,17 @@ export const SITE_SETTINGS_DEFAULTS: SiteSettings = {
   tagline: "Seat by Seat.",
   description:
     "Affordable, secure and spotlessly clean accommodation built for students and working professionals. Pick your seat — we handle the rest.",
-  email: "hello@stayinn.example",
-  phone: "+91 90000 00000",
-  address: "123 Hostel Lane",
-  city: "Mumbai",
-  country: "India",
-  whatsapp: null,
-  whatsapp_url: null,
-  fullAddress: "123 Hostel Lane, Mumbai, India",
+  email: "info@stayinnhostels.com",
+  phone: "+92 331 0008196",
+  address: "Lahore",
+  city: "Punjab",
+  country: "Pakistan",
+  whatsapp: "923310008196",
+  whatsapp_url: "https://wa.me/923310008196",
+  fullAddress: "Lahore, Punjab, Pakistan",
   mapUrl: "",
+  primaryColor: DEFAULT_PRIMARY_COLOR,
+  accentColor: DEFAULT_ACCENT_COLOR,
   ...BOOKING_RULES_DEFAULTS,
 };
 

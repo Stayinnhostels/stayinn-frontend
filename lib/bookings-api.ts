@@ -17,7 +17,14 @@ export type BookingResult = {
   guest_email: string;
   guest_phone: string;
   seats_booked: number;
+  stay_unit?: "month" | "night";
+  nights?: number | null;
   months: number;
+  months_paid_upfront?: number | null;
+  amount_paid_upfront?: number;
+  amount_outstanding?: number;
+  security_status?: string;
+  security_amount?: number | null;
   move_in: string;
   check_out: string;
   price_per_seat: number;
@@ -35,7 +42,10 @@ export type CreateBookingInput = {
   guest_email: string;
   guest_phone: string;
   seats_booked: number;
-  months: number;
+  stay_unit?: "month" | "night";
+  months?: number;
+  nights?: number;
+  months_to_pay?: number;
   move_in: string;
   notes?: string;
   coupon_code?: string;

@@ -60,7 +60,7 @@ export default function PrivacyPage() {
         <Section title="5. Your GDPR Rights">
           <p>
             If you are in the European Economic Area, you have the right to access, correct, delete, restrict, or port your personal data, and to withdraw consent at any time. Contact us at{" "}
-            <span className="text-primary font-semibold">privacy@stayinn.example</span> to exercise these rights.
+            <span className="text-primary font-semibold">info@stayinnhostels.com</span> to exercise these rights.
           </p>
         </Section>
 
