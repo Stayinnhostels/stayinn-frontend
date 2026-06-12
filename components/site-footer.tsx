@@ -2,11 +2,30 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { SocialLinks } from "@/components/social-links";
+import { WhatsAppLink } from "@/components/whatsapp-link";
 import { useSiteSettings } from "@/components/site-settings-provider";
 import { FOOTER_LOGO_CLASS, FOOTER_LOGO_SRC } from "@/lib/brand-assets";
 
 export function SiteFooter() {
-  const { hotelName, description, email, phone, fullAddress, address, city, country } = useSiteSettings();
+  const {
+    hotelName,
+    description,
+    email,
+    phone,
+    fullAddress,
+    address,
+    city,
+    country,
+    whatsapp_url,
+    website,
+    instagram,
+    facebook,
+    twitter,
+    youtube,
+    linkedin,
+    threads,
+  } = useSiteSettings();
   const addressLine = fullAddress || [address, city, country].filter(Boolean).join(", ");
   return (
     <footer className="border-t bg-muted/30 mt-20">
@@ -22,6 +41,17 @@ export function SiteFooter() {
             />
           </Link>
           <p className="text-sm text-muted-foreground max-w-xs">{description}</p>
+          <SocialLinks
+            fields={{
+              website,
+              instagram,
+              facebook,
+              twitter,
+              youtube,
+              linkedin,
+              threads,
+            }}
+          />
         </div>
         <div>
           <div className="text-sm font-bold mb-3">Explore</div>
@@ -94,6 +124,12 @@ export function SiteFooter() {
             </li>
             <li>Mon–Sun · 9am–9pm</li>
           </ul>
+          {whatsapp_url ? (
+            <div className="pt-3 space-y-2">
+              <div className="text-sm font-bold">WhatsApp</div>
+              <WhatsAppLink href={whatsapp_url} />
+            </div>
+          ) : null}
         </div>
       </div>
       <div className="border-t">

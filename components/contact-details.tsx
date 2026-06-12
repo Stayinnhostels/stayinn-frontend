@@ -1,6 +1,8 @@
 "use client";
 
 import { Mail, MapPin, Phone } from "lucide-react";
+import { SocialLinks } from "@/components/social-links";
+import { WhatsAppLink } from "@/components/whatsapp-link";
 import { useSiteSettings } from "@/components/site-settings-provider";
 import { resolveMapEmbedSrc } from "@/lib/map-embed";
 
@@ -36,7 +38,22 @@ export function ContactDetailsCards() {
 }
 
 export function ContactMapSection() {
-  const { hotelName, fullAddress, address, city, country, mapUrl } = useSiteSettings();
+  const {
+    hotelName,
+    fullAddress,
+    address,
+    city,
+    country,
+    mapUrl,
+    whatsapp_url,
+    website,
+    instagram,
+    facebook,
+    twitter,
+    youtube,
+    linkedin,
+    threads,
+  } = useSiteSettings();
   const addressLine = fullAddress || [address, city, country].filter(Boolean).join(", ");
   const mapSrc = resolveMapEmbedSrc(mapUrl, addressLine);
 
@@ -56,6 +73,23 @@ export function ContactMapSection() {
         <p className="text-sm text-muted-foreground">
           Follow along for room drops, community events and resident stories.
         </p>
+        <SocialLinks
+          fields={{
+            website,
+            instagram,
+            facebook,
+            twitter,
+            youtube,
+            linkedin,
+            threads,
+          }}
+        />
+        {whatsapp_url ? (
+          <div className="space-y-2 pt-1">
+            <div className="text-sm font-bold">Chat on WhatsApp</div>
+            <WhatsAppLink href={whatsapp_url} />
+          </div>
+        ) : null}
         <div className="rounded-2xl bg-muted/50 p-5 text-sm">
           <div className="font-bold mb-1">{hotelName}</div>
           <div className="text-muted-foreground">

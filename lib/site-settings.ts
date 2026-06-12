@@ -17,6 +17,13 @@ export type SiteSettings = {
   mapUrl: string;
   primaryColor: string;
   accentColor: string;
+  website: string;
+  instagram: string;
+  facebook: string;
+  twitter: string;
+  youtube: string;
+  linkedin: string;
+  threads: string;
 } & BookingRulesSettings;
 
 export const SITE_SETTINGS_DEFAULTS: SiteSettings = {
@@ -35,6 +42,13 @@ export const SITE_SETTINGS_DEFAULTS: SiteSettings = {
   mapUrl: "",
   primaryColor: DEFAULT_PRIMARY_COLOR,
   accentColor: DEFAULT_ACCENT_COLOR,
+  website: "",
+  instagram: "",
+  facebook: "",
+  twitter: "",
+  youtube: "",
+  linkedin: "",
+  threads: "",
   ...BOOKING_RULES_DEFAULTS,
 };
 
