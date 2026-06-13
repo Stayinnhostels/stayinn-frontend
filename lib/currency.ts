@@ -90,50 +90,32 @@ export function hasRegionConflict(signals: RegionSignals): boolean {
 }
 
 /**
- * Strict rules:
- * - Explicit user choice always wins (handled in provider).
- * - PKR if IP is PK OR local device signals Pakistan.
- * - USD only if IP is known and not PK, and local does not say Pakistan.
- * - Unknown IP + no local PK → default PKR (Stay Inn is in Pakistan).
+ * Website uses PKR only for now. USD / international pricing will be added later.
  */
-export function resolveCurrencyFromSignals(signals: RegionSignals): DisplayCurrency {
-  if (ipSuggestsPakistan(signals) || localSuggestsPakistan(signals)) {
-    return "pkr";
-  }
-  if (ipSuggestsInternational(signals)) {
-    return "usd";
-  }
+export function resolveCurrencyFromSignals(_signals: RegionSignals): DisplayCurrency {
   return "pkr";
 }
 
 export function detectDefaultCurrency(): DisplayCurrency {
-  return resolveCurrencyFromSignals(collectLocalRegionSignals());
+  return "pkr";
 }
 
 export function getStoredCurrency(): DisplayCurrency | null {
-  if (typeof window === "undefined") return null;
-  const v = localStorage.getItem(STORAGE_KEY);
-  return v === "pkr" || v === "usd" ? v : null;
+  return "pkr";
 }
 
 export function isCurrencyExplicitlyChosen(): boolean {
-  if (typeof window === "undefined") return false;
-  return localStorage.getItem(STORAGE_EXPLICIT_KEY) === "1";
+  return true;
 }
 
 export function getDisplayCurrency(): DisplayCurrency {
-  if (isCurrencyExplicitlyChosen()) {
-    return getStoredCurrency() ?? "pkr";
-  }
-  return getStoredCurrency() ?? detectDefaultCurrency();
+  return "pkr";
 }
 
-export function setDisplayCurrency(currency: DisplayCurrency, options?: { explicit?: boolean }) {
+export function setDisplayCurrency(currency: DisplayCurrency, _options?: { explicit?: boolean }) {
   if (typeof window === "undefined") return;
-  localStorage.setItem(STORAGE_KEY, currency);
-  if (options?.explicit !== false) {
-    localStorage.setItem(STORAGE_EXPLICIT_KEY, "1");
-  }
+  localStorage.setItem(STORAGE_KEY, currency === "usd" ? "pkr" : currency);
+  localStorage.setItem(STORAGE_EXPLICIT_KEY, "1");
 }
 
 export function formatMoney(amount: number, currency: DisplayCurrency): string {

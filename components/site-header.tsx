@@ -16,11 +16,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { LogOut, Menu, User } from "lucide-react";
+import { LogOut, Menu, User, ArrowRight } from "lucide-react";
 import { BrandNavLogo } from "@/components/brand-nav-logo";
 import { NAV_BAR_CLASS } from "@/lib/brand-assets";
 import { useSiteSettings } from "@/components/site-settings-provider";
-import { CurrencyToggle } from "@/components/currency-toggle";
 
 const nav = [
   { href: "/", label: "Home" },
@@ -45,6 +44,9 @@ function NavLink({ href, label, exact }: { href: string; label: string; exact?: 
   );
 }
 
+const bookSeatCtaClass =
+  "rounded-full px-6 md:px-8 h-11 md:h-12 text-sm md:text-base font-extrabold shadow-[var(--shadow-glow)] bg-[image:var(--gradient-hero)] hover:scale-[1.03] transition-transform border-0";
+
 function SiteHeaderInner() {
   const { hotelName } = useSiteSettings();
   const { user, logout, isAdmin } = useAuth();
@@ -67,7 +69,6 @@ function SiteHeaderInner() {
           ))}
         </nav>
         <div className="flex shrink-0 items-center gap-2">
-          <CurrencyToggle className="hidden sm:flex" />
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -106,8 +107,11 @@ function SiteHeaderInner() {
               <Link href={signInHref}>Sign in</Link>
             </Button>
           )}
-          <Button asChild size="sm" className="rounded-full px-5 font-semibold shadow-[var(--shadow-soft)] hidden sm:inline-flex">
-            <Link href="/booking">Book a Seat</Link>
+          <Button asChild size="lg" className={`${bookSeatCtaClass} hidden sm:inline-flex`}>
+            <Link href="/booking">
+              Book a Seat
+              <ArrowRight className="ml-1.5 h-4 w-4" />
+            </Link>
           </Button>
           <Sheet>
             <SheetTrigger asChild>
@@ -120,8 +124,12 @@ function SiteHeaderInner() {
                 {nav.map((n) => (
                   <NavLink key={n.href} href={n.href} label={n.label} exact={n.href === "/"} />
                 ))}
-                <Link href="/booking" className="mt-2 inline-flex items-center justify-center rounded-full bg-primary text-primary-foreground px-5 py-2.5 font-bold">
+                <Link
+                  href="/booking"
+                  className={`mt-2 inline-flex items-center justify-center gap-1.5 ${bookSeatCtaClass} text-primary-foreground`}
+                >
                   Book a Seat
+                  <ArrowRight className="h-4 w-4" />
                 </Link>
               </nav>
             </SheetContent>

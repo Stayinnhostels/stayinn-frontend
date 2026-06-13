@@ -45,12 +45,15 @@ export function buildThemeCssVars(primaryColor?: string, accentColor?: string): 
   const primary = normalizeBrandColor(primaryColor, DEFAULT_PRIMARY_COLOR);
   const accent = normalizeBrandColor(accentColor, DEFAULT_ACCENT_COLOR);
   const primaryLight = mixHex(primary, "white", 0.18);
+  const primaryDark = mixHex(primary, "black", 0.32);
   const accentLight = mixHex(accent, "white", 0.15);
   const warmAccent = mixHex(primary, "white", 0.42);
 
   return {
     "--primary": primary,
     "--primary-foreground": foregroundForBg(primary),
+    "--primary-dark": primaryDark,
+    "--primary-dark-foreground": foregroundForBg(primaryDark),
     "--ring": primary,
     "--secondary": accent,
     "--secondary-foreground": foregroundForBg(accent),

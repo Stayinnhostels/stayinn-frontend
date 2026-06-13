@@ -1,7 +1,4 @@
-@import "tailwindcss" source(none);
-@source "../app";
-@source "../components";
-@source "../lib";
+@import "tailwindcss";
 @import "../node_modules/tw-animate-css/dist/tw-animate.css";
 
 @custom-variant dark (&:is(.dark *));
@@ -59,6 +56,8 @@
   --popover-foreground: oklch(0.18 0.04 250);
   --primary: oklch(0.62 0.22 35);
   --primary-foreground: oklch(0.99 0.01 80);
+  --primary-dark: oklch(0.42 0.18 35);
+  --primary-dark-foreground: oklch(0.99 0.01 80);
   --secondary: oklch(0.55 0.13 200);
   --secondary-foreground: oklch(0.99 0.01 80);
   --muted: oklch(0.96 0.015 80);

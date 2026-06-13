@@ -8,6 +8,8 @@ type Props = {
   fields: SocialLinkFields;
   className?: string;
   iconClassName?: string;
+  /** Light icons for primary/dark backgrounds */
+  inverted?: boolean;
 };
 
 function XIcon({ className }: { className?: string }) {
@@ -35,9 +37,13 @@ const iconMap = {
   threads: ThreadsIcon,
 } as const;
 
-export function SocialLinks({ fields, className, iconClassName = "h-5 w-5" }: Props) {
+export function SocialLinks({ fields, className, iconClassName = "h-5 w-5", inverted }: Props) {
   const links = buildSocialLinks(fields);
   if (links.length === 0) return null;
+
+  const iconButtonClass = inverted
+    ? "border-primary-foreground/25 bg-primary-foreground/10 text-primary-foreground hover:border-primary-foreground/40 hover:bg-primary-foreground/20"
+    : "border bg-background text-muted-foreground hover:border-primary/40 hover:bg-primary/10 hover:text-primary";
 
   return (
     <div className={cn("flex flex-wrap items-center gap-2", className)}>
@@ -51,7 +57,10 @@ export function SocialLinks({ fields, className, iconClassName = "h-5 w-5" }: Pr
             rel="noopener noreferrer"
             aria-label={label}
             title={label}
-            className="flex h-10 w-10 items-center justify-center rounded-full border bg-background text-muted-foreground transition-colors hover:border-primary/40 hover:bg-primary/10 hover:text-primary"
+            className={cn(
+              "flex h-10 w-10 items-center justify-center rounded-full transition-colors",
+              iconButtonClass,
+            )}
           >
             <Icon className={iconClassName} />
           </a>

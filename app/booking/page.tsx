@@ -104,8 +104,7 @@ function BookingForm() {
   }, [room?.id, room?.beds_available]);
 
   const isNightStay = stayUnit === "night";
-  const nightlyRate =
-    currency === "usd" ? room?.visitor_nightly_rate_usd ?? 15 : room?.visitor_nightly_rate_pkr ?? 1500;
+  const nightlyRate = room?.visitor_nightly_rate_pkr ?? 1500;
   const listTotal = room
     ? isNightStay
       ? nightlyRate * seats * nights

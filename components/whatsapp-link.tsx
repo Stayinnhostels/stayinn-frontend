@@ -6,6 +6,7 @@ type Props = {
   href: string | null | undefined;
   className?: string;
   iconClassName?: string;
+  inverted?: boolean;
 };
 
 function WhatsAppIcon({ className }: { className?: string }) {
@@ -16,7 +17,7 @@ function WhatsAppIcon({ className }: { className?: string }) {
   );
 }
 
-export function WhatsAppLink({ href, className, iconClassName = "h-5 w-5" }: Props) {
+export function WhatsAppLink({ href, className, iconClassName = "h-5 w-5", inverted }: Props) {
   const url = href?.trim();
   if (!url) return null;
 
@@ -28,7 +29,10 @@ export function WhatsAppLink({ href, className, iconClassName = "h-5 w-5" }: Pro
       aria-label="WhatsApp"
       title="WhatsApp"
       className={cn(
-        "flex h-10 w-10 items-center justify-center rounded-full border bg-background text-[#25D366] transition-colors hover:border-[#25D366]/40 hover:bg-[#25D366]/10",
+        "flex h-10 w-10 items-center justify-center rounded-full border transition-colors",
+        inverted
+          ? "border-primary-foreground/25 bg-primary-foreground/10 text-[#25D366] hover:border-primary-foreground/40 hover:bg-primary-foreground/20"
+          : "bg-background text-[#25D366] hover:border-[#25D366]/40 hover:bg-[#25D366]/10",
         className,
       )}
     >
