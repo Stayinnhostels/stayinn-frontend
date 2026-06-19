@@ -24,6 +24,7 @@ export type ApiRoom = {
   amenities: string[];
   images: string[];
   badge: string | null;
+  display_order?: number;
 };
 
 /** Room shape used by marketing pages */
@@ -116,7 +117,10 @@ export async function fetchRooms(
     throw new Error("Could not load rooms");
   }
 
-  return data.rooms.map(mapApiRoomToMarketing).filter(isRoomListedOnSite);
+  return [...data.rooms]
+    .sort((a, b) => (a.display_order ?? 100) - (b.display_order ?? 100))
+    .map(mapApiRoomToMarketing)
+    .filter(isRoomListedOnSite);
 }
 
 export async function fetchRoomById(

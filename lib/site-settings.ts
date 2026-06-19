@@ -1,5 +1,10 @@
 import { getApiBaseUrl } from "@/lib/api-client";
 import { BOOKING_RULES_DEFAULTS, type BookingRulesSettings } from "@/lib/booking-rules";
+import { HOMEPAGE_HERO_DEFAULTS, type HomepageHeroSettings } from "@/lib/homepage-hero";
+import { HOMEPAGE_CTA_DEFAULTS, type HomepageCtaSettings } from "@/lib/homepage-cta";
+import { ABOUT_PAGE_DEFAULTS, type AboutPageSettings } from "@/lib/about-page";
+import { normalizeAboutValues } from "@/lib/about-values";
+import { ROOMS_FILTER_DEFAULTS, type RoomsFilterSettings } from "@/lib/rooms-filter";
 import { DEFAULT_ACCENT_COLOR, DEFAULT_PRIMARY_COLOR } from "@/lib/site-theme";
 
 export type SiteSettings = {
@@ -24,7 +29,11 @@ export type SiteSettings = {
   youtube: string;
   linkedin: string;
   threads: string;
-} & BookingRulesSettings;
+} & BookingRulesSettings &
+  RoomsFilterSettings &
+  HomepageHeroSettings &
+  HomepageCtaSettings &
+  AboutPageSettings;
 
 export const SITE_SETTINGS_DEFAULTS: SiteSettings = {
   hotelName: "Stay Inn Hostels",
@@ -49,7 +58,11 @@ export const SITE_SETTINGS_DEFAULTS: SiteSettings = {
   youtube: "",
   linkedin: "",
   threads: "",
+  ...ROOMS_FILTER_DEFAULTS,
   ...BOOKING_RULES_DEFAULTS,
+  ...HOMEPAGE_HERO_DEFAULTS,
+  ...HOMEPAGE_CTA_DEFAULTS,
+  ...ABOUT_PAGE_DEFAULTS,
 };
 
 export function brandShortName(hotelName: string) {
@@ -68,7 +81,11 @@ export async function fetchPublicSiteSettings(): Promise<SiteSettings> {
     if (!res.ok) return SITE_SETTINGS_DEFAULTS;
     const data = (await res.json()) as { success?: boolean; settings?: SiteSettings };
     if (!data.success || !data.settings) return SITE_SETTINGS_DEFAULTS;
-    return { ...SITE_SETTINGS_DEFAULTS, ...data.settings };
+    const merged = { ...SITE_SETTINGS_DEFAULTS, ...data.settings };
+    return {
+      ...merged,
+      aboutValues: normalizeAboutValues(merged as unknown as Record<string, unknown>),
+    };
   } catch {
     return SITE_SETTINGS_DEFAULTS;
   }

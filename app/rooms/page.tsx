@@ -1,17 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Slider } from "@/components/ui/slider";
-import { Label } from "@/components/ui/label";
-import { Users, Check, SlidersHorizontal, Loader2 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Users, Check } from "lucide-react";
 import { useCurrency } from "@/components/currency-provider";
+import { useSiteSettings } from "@/components/site-settings-provider";
+import { RoomsFiltersSidebar } from "@/components/rooms-filters-sidebar";
+import { RoomsPageSkeleton } from "@/components/rooms-page-skeleton";
+import { normalizeRoomsFilterBounds } from "@/lib/rooms-filter";
 import {
   AMENITY_LIST,
   ROOM_TYPES,
@@ -20,15 +22,39 @@ import {
   type MarketingRoom,
 } from "@/lib/rooms-api";
 
+const CAPACITY_OPTIONS = [1, 2, 3, 4] as const;
+const RESULTS_SCROLL_OFFSET = 88;
+
 export default function RoomsPage() {
+  const { roomsFilterMinPrice, roomsFilterMaxPrice } = useSiteSettings();
+  const settingsBounds = useMemo(
+    () => normalizeRoomsFilterBounds(roomsFilterMinPrice, roomsFilterMaxPrice),
+    [roomsFilterMinPrice, roomsFilterMaxPrice],
+  );
   const { currency, formatPrice, ready } = useCurrency();
   const [rooms, setRooms] = useState<MarketingRoom[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [price, setPrice] = useState<[number, number]>([3000, 15000]);
+  const [priceBounds, setPriceBounds] = useState<[number, number]>(settingsBounds);
+  const [price, setPrice] = useState<[number, number]>(settingsBounds);
   const [types, setTypes] = useState<string[]>([]);
   const [capacity, setCapacity] = useState<number[]>([]);
   const [amenities, setAmenities] = useState<string[]>([]);
+  const resultsRef = useRef<HTMLDivElement>(null);
+  const skipResultsScrollRef = useRef(true);
+  const [priceScrollToken, setPriceScrollToken] = useState(0);
+
+  function scrollResultsIntoView() {
+    const el = resultsRef.current;
+    if (!el || typeof window === "undefined") return;
+    const top = el.getBoundingClientRect().top + window.scrollY - RESULTS_SCROLL_OFFSET;
+    window.scrollTo({ top: Math.max(0, top), behavior: "instant" });
+  }
+
+  useEffect(() => {
+    setPriceBounds(settingsBounds);
+    setPrice(settingsBounds);
+  }, [settingsBounds]);
 
   useEffect(() => {
     if (!ready) return;
@@ -40,10 +66,6 @@ export default function RoomsPage() {
         const list = await fetchRooms({ limit: 100, currency });
         if (!cancelled) {
           setRooms(list);
-          if (list.length > 0) {
-            const prices = list.map((r) => r.price);
-            setPrice([Math.min(...prices), Math.max(...prices)]);
-          }
         }
       } catch (e) {
         if (!cancelled) {
@@ -58,10 +80,12 @@ export default function RoomsPage() {
     };
   }, [currency, ready]);
 
-  const toggle = (arr: string[], v: string, set: (a: string[]) => void) =>
-    set(arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v]);
-  const toggleNum = (arr: number[], v: number, set: (a: number[]) => void) =>
-    set(arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v]);
+  const toggleType = (v: string) =>
+    setTypes((prev) => (prev.includes(v) ? prev.filter((x) => x !== v) : [...prev, v]));
+  const toggleCapacity = (v: number) =>
+    setCapacity((prev) => (prev.includes(v) ? prev.filter((x) => x !== v) : [...prev, v]));
+  const toggleAmenity = (v: string) =>
+    setAmenities((prev) => (prev.includes(v) ? prev.filter((x) => x !== v) : [...prev, v]));
 
   const filtered = useMemo(
     () =>
@@ -76,13 +100,25 @@ export default function RoomsPage() {
     [rooms, price, types, capacity, amenities],
   );
 
-  const reset = () => {
-    if (rooms.length > 0) {
-      const prices = rooms.map((r) => r.price);
-      setPrice([Math.min(...prices), Math.max(...prices)]);
-    } else {
-      setPrice([3000, 15000]);
+  const activeFilterCount = useMemo(() => {
+    let count = 0;
+    if (types.length > 0) count += 1;
+    if (capacity.length > 0) count += 1;
+    if (amenities.length > 0) count += 1;
+    if (price[0] !== priceBounds[0] || price[1] !== priceBounds[1]) count += 1;
+    return count;
+  }, [types, capacity, amenities, price, priceBounds]);
+
+  useLayoutEffect(() => {
+    if (loading || skipResultsScrollRef.current) {
+      skipResultsScrollRef.current = false;
+      return;
     }
+    scrollResultsIntoView();
+  }, [types, capacity, amenities, priceScrollToken, loading]);
+
+  const reset = () => {
+    setPrice(priceBounds);
     setTypes([]);
     setCapacity([]);
     setAmenities([]);
@@ -102,80 +138,31 @@ export default function RoomsPage() {
         </p>
       </section>
 
-      <section className="container mx-auto grid gap-8 px-4 pb-20 lg:grid-cols-[280px_1fr]">
-        <aside className="h-fit space-y-7 self-start rounded-3xl border-2 bg-card p-6 lg:sticky lg:top-20">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 font-extrabold">
-              <SlidersHorizontal className="h-4 w-4" /> Filters
-            </div>
-            <button type="button" onClick={reset} className="text-xs font-bold text-primary hover:underline">
-              Reset
-            </button>
-          </div>
+      <section className="container mx-auto grid gap-8 px-4 pb-20 lg:grid-cols-[300px_1fr] xl:grid-cols-[320px_1fr]">
+        <RoomsFiltersSidebar
+          formatPrice={formatPrice}
+          price={price}
+          priceBounds={priceBounds}
+          onPriceChange={setPrice}
+          onPriceCommit={() => setPriceScrollToken((n) => n + 1)}
+          roomTypes={ROOM_TYPES}
+          types={types}
+          onToggleType={toggleType}
+          capacityOptions={CAPACITY_OPTIONS}
+          capacity={capacity}
+          onToggleCapacity={toggleCapacity}
+          amenities={AMENITY_LIST}
+          selectedAmenities={amenities}
+          onToggleAmenity={toggleAmenity}
+          onReset={reset}
+          activeFilterCount={activeFilterCount}
+        />
 
-          <div className="space-y-3">
-            <Label className="text-sm font-bold">Price range (per seat / month)</Label>
-            <Slider
-              min={price[0]}
-              max={Math.max(price[1], price[0] + 500)}
-              step={500}
-              value={price}
-              onValueChange={(v) => setPrice([v[0], v[1]] as [number, number])}
-            />
-            <div className="flex justify-between text-xs text-muted-foreground">
-              <span>{formatPrice(price[0])}</span>
-              <span>{formatPrice(price[1])}</span>
-            </div>
-          </div>
-
-          <div className="space-y-3">
-            <Label className="text-sm font-bold">Room type</Label>
-            <div className="space-y-2">
-              {ROOM_TYPES.map((t) => (
-                <label key={t} className="flex cursor-pointer items-center gap-2 text-sm">
-                  <Checkbox checked={types.includes(t)} onCheckedChange={() => toggle(types, t, setTypes)} />
-                  {t}
-                </label>
-              ))}
-            </div>
-          </div>
-
-          <div className="space-y-3">
-            <Label className="text-sm font-bold">Capacity</Label>
-            <div className="space-y-2">
-              {[1, 2, 3, 4].map((c) => (
-                <label key={c} className="flex cursor-pointer items-center gap-2 text-sm">
-                  <Checkbox
-                    checked={capacity.includes(c)}
-                    onCheckedChange={() => toggleNum(capacity, c, setCapacity)}
-                  />
-                  {c} {c === 1 ? "seat" : "seats"}
-                </label>
-              ))}
-            </div>
-          </div>
-
-          <div className="space-y-3">
-            <Label className="text-sm font-bold">Amenities</Label>
-            <div className="max-h-56 space-y-2 overflow-auto pr-1">
-              {AMENITY_LIST.map((a) => (
-                <label key={a} className="flex cursor-pointer items-center gap-2 text-sm">
-                  <Checkbox
-                    checked={amenities.includes(a)}
-                    onCheckedChange={() => toggle(amenities, a, setAmenities)}
-                  />
-                  {a}
-                </label>
-              ))}
-            </div>
-          </div>
-        </aside>
-
-        <div>
+        <div ref={resultsRef} className="scroll-mt-24 [overflow-anchor:none]">
           <div className="mb-5 flex items-center justify-between">
             <div className="text-sm text-muted-foreground">
               {loading ? (
-                "Loading rooms…"
+                <Skeleton className="inline-block h-4 w-36" />
               ) : (
                 <>
                   <span className="font-bold text-foreground">{filtered.length}</span> rooms match your filters
@@ -185,9 +172,7 @@ export default function RoomsPage() {
           </div>
 
           {loading ? (
-            <div className="flex items-center justify-center gap-2 rounded-3xl border-2 border-dashed py-24 text-muted-foreground">
-              <Loader2 className="h-6 w-6 animate-spin" /> Loading rooms from server…
-            </div>
+            <RoomsPageSkeleton count={4} />
           ) : loadError ? (
             <div className="rounded-3xl border-2 border-dashed p-16 text-center">
               <p className="mb-2 font-bold text-destructive">Could not load rooms</p>
@@ -208,7 +193,7 @@ export default function RoomsPage() {
               </Button>
             </div>
           ) : (
-            <div className="grid gap-6 sm:grid-cols-2">
+            <div className="grid gap-6 sm:grid-cols-2 [overflow-anchor:none]">
               {filtered.map((r) => (
                 <Card
                   key={r.id}

@@ -1,4 +1,4 @@
-export const DEFAULT_PRIMARY_COLOR = "#f97316";
+export const DEFAULT_PRIMARY_COLOR = "#0066B2";
 export const DEFAULT_ACCENT_COLOR = "#0ea5e9";
 
 function parseHex(hex: string): [number, number, number] | null {

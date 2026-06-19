@@ -8,7 +8,7 @@ export type SubmitContactInput = {
 };
 
 export async function submitContactMessage(input: SubmitContactInput): Promise<void> {
-  await apiFetch<{ success: boolean; message?: string }>("/api/v1/contact", {
+  const data = await apiFetch<{ success: boolean; message?: string }>("/api/v1/contact", {
     method: "POST",
     body: JSON.stringify({
       guest_name: input.guest_name.trim(),
@@ -17,4 +17,7 @@ export async function submitContactMessage(input: SubmitContactInput): Promise<v
       message: input.message.trim(),
     }),
   });
+  if (!data.success) {
+    throw new Error(data.message ?? "Could not send message");
+  }
 }
