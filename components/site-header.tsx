@@ -58,7 +58,7 @@ function SiteHeaderInner() {
   );
 
   return (
-    <header className="sticky top-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-xl">
+    <header className="sticky top-[3.25rem] z-50 border-b border-border/50 bg-background/80 backdrop-blur-xl">
       <div className={`container mx-auto ${NAV_BAR_CLASS}`}>
         <Link href="/" className="flex shrink-0 items-center">
           <BrandNavLogo alt={hotelName} />
@@ -144,7 +144,7 @@ export function SiteHeader() {
   return (
     <Suspense
       fallback={
-        <header className="sticky top-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-xl min-h-[5rem] sm:min-h-[5.25rem]" />
+        <header className="sticky top-[3.25rem] z-50 border-b border-border/50 bg-background/80 backdrop-blur-xl min-h-[5rem] sm:min-h-[5.25rem]" />
       }
     >
       <SiteHeaderInner />
