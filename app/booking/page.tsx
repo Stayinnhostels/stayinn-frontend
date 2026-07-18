@@ -22,8 +22,11 @@ import {
   Plus,
   Tag,
   X,
+  MapPin,
+  ExternalLink,
 } from "lucide-react";
 import { useCurrency } from "@/components/currency-provider";
+import { useSiteSettings } from "@/components/site-settings-provider";
 import { getApiBaseUrl } from "@/lib/api-client";
 import { BOOKING_RULES_DEFAULTS } from "@/lib/booking-rules";
 import { fetchRooms, formatSeatsFree, type MarketingRoom } from "@/lib/rooms-api";
@@ -31,6 +34,7 @@ import { createBookingApi, type BookingContact, type BookingResult } from "@/lib
 import { validateCouponApi, type ValidateCouponResult } from "@/lib/coupons-api";
 import { formatPhoneForDisplay, resolvePropertyContact } from "@/lib/property-contact";
 import { securityDepositForSeats, securityPerSeat } from "@/lib/security-deposit";
+import { resolveMapOpenUrl } from "@/lib/map-embed";
 
 const NIGHT_PRESETS = [1, 2, 3, 4, 5, 6, 7, 10, 14, 21, 30];
 
@@ -39,10 +43,141 @@ function todayIsoDate() {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
+/** Keep only today or a future local calendar day. */
+function clampMoveInDate(value: string) {
+  const today = todayIsoDate();
+  const key = value.slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(key) || key < today) return today;
+  return key;
+}
+
 function nightOptions(minStay: number, maxStay: number) {
   const inRange = NIGHT_PRESETS.filter((n) => n >= minStay && n <= maxStay);
   if (inRange.length > 0) return inRange;
   return Array.from({ length: maxStay - minStay + 1 }, (_, i) => minStay + i).slice(0, 12);
+}
+
+function BookingSuccessView({
+  booking,
+  formatPrice,
+  payAtCheckIn,
+  stayLabel,
+  refCode,
+  hasContact,
+  contact,
+  phoneDisplay,
+}: {
+  booking: BookingResult;
+  formatPrice: (n: number) => string;
+  payAtCheckIn: number;
+  stayLabel: string;
+  refCode: string;
+  hasContact: boolean;
+  contact: ReturnType<typeof resolvePropertyContact>;
+  phoneDisplay: string | null;
+}) {
+  const { hotelName, fullAddress, address, city, country, mapUrl } = useSiteSettings();
+  const addressLine = fullAddress || [address, city, country].filter(Boolean).join(", ");
+  const mapHref = addressLine ? resolveMapOpenUrl(mapUrl, addressLine) : null;
+
+  return (
+    <div className="flex min-h-screen flex-col bg-background text-foreground">
+      <SiteHeader />
+      <main className="flex flex-1 items-center justify-center px-4 py-10 md:py-14">
+        <div className="w-full max-w-md text-center">
+          <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-500/12 text-emerald-600">
+            <Check className="h-7 w-7" strokeWidth={2.5} />
+          </div>
+
+          <h1 className="text-2xl font-extrabold tracking-tight md:text-3xl">Request received</h1>
+          <p className="mt-2 text-sm text-muted-foreground md:text-[15px]">
+            Your seat is held as pending. Message or call us to confirm — nothing was charged online.
+          </p>
+
+          <dl className="mt-8 space-y-3 border-y border-border/70 py-5 text-left text-sm">
+            <div className="flex items-baseline justify-between gap-4">
+              <dt className="text-muted-foreground">Room</dt>
+              <dd className="font-semibold text-right">
+                {booking.room_title ?? "Room"} · {booking.seats_booked} seat
+                {booking.seats_booked === 1 ? "" : "s"}
+              </dd>
+            </div>
+            <div className="flex items-baseline justify-between gap-4">
+              <dt className="text-muted-foreground">Stay</dt>
+              <dd className="font-semibold">{stayLabel}</dd>
+            </div>
+            <div className="flex items-baseline justify-between gap-4">
+              <dt className="text-muted-foreground">Move-in</dt>
+              <dd className="font-semibold">{booking.move_in}</dd>
+            </div>
+            <div className="flex items-baseline justify-between gap-4">
+              <dt className="text-muted-foreground">Pay at check-in</dt>
+              <dd className="font-semibold">{formatPrice(payAtCheckIn)}</dd>
+            </div>
+            <div className="flex items-baseline justify-between gap-4">
+              <dt className="text-muted-foreground">Reference</dt>
+              <dd className="font-mono text-xs font-semibold tracking-wide">#{refCode}</dd>
+            </div>
+          </dl>
+
+          <p className="mt-4 text-xs text-muted-foreground">
+            Confirmation emailed to <span className="font-medium text-foreground">{booking.guest_email}</span>
+          </p>
+
+          {addressLine && mapHref ? (
+            <a
+              href={mapHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-6 flex items-start gap-3 rounded-2xl border border-border/70 bg-muted/30 px-4 py-3.5 text-left transition-colors hover:border-primary/40 hover:bg-muted/50"
+            >
+              <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+              <span className="min-w-0 flex-1">
+                <span className="block text-xs font-semibold text-muted-foreground">Find us</span>
+                <span className="mt-0.5 block text-sm font-semibold leading-snug text-foreground">
+                  {hotelName}
+                </span>
+                <span className="mt-0.5 block text-sm leading-snug text-muted-foreground">{addressLine}</span>
+                <span className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-primary">
+                  Open in Google Maps <ExternalLink className="h-3 w-3" />
+                </span>
+              </span>
+            </a>
+          ) : null}
+
+          <div className="mt-6 space-y-2.5">
+            {hasContact ? (
+              <>
+                {contact.whatsapp_url ? (
+                  <Button asChild className="w-full font-bold" size="lg">
+                    <a href={contact.whatsapp_url} target="_blank" rel="noopener noreferrer">
+                      <MessageCircle className="h-4 w-4" />
+                      WhatsApp{contact.whatsappDisplay ? ` · ${contact.whatsappDisplay}` : ""}
+                    </a>
+                  </Button>
+                ) : null}
+                {phoneDisplay && contact.phoneTel ? (
+                  <Button asChild variant="outline" className="w-full font-bold" size="lg">
+                    <a href={`tel:${contact.phoneTel}`}>
+                      <Phone className="h-4 w-4" /> Call {phoneDisplay}
+                    </a>
+                  </Button>
+                ) : null}
+              </>
+            ) : (
+              <Button asChild variant="outline" className="w-full font-bold" size="lg">
+                <Link href="/contact">Contact us</Link>
+              </Button>
+            )}
+            <Button asChild variant="ghost" className="w-full text-muted-foreground">
+              <Link href="/rooms">Browse more rooms</Link>
+            </Button>
+          </div>
+        </div>
+      </main>
+      <SiteFooter />
+    </div>
+  );
 }
 
 function BookingForm() {
@@ -67,6 +202,15 @@ function BookingForm() {
   const [appliedCoupon, setAppliedCoupon] = useState<ValidateCouponResult | null>(null);
   const [couponError, setCouponError] = useState<string | null>(null);
   const [validatingCoupon, setValidatingCoupon] = useState(false);
+  const [moveIn, setMoveIn] = useState(() => todayIsoDate());
+
+  // If the tab stays open past midnight, bump a stale “today” selection forward.
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      setMoveIn((prev) => clampMoveInDate(prev));
+    }, 60_000);
+    return () => window.clearInterval(id);
+  }, []);
 
   useEffect(() => {
     if (!ready) return;
@@ -168,9 +312,14 @@ function BookingForm() {
       return;
     }
     const fd = new FormData(e.currentTarget);
-    const moveIn = String(fd.get("moveIn") ?? "");
-    if (!moveIn || moveIn < todayIsoDate()) {
-      setError("Check-in date must be today or a future date.");
+    const moveInDate = clampMoveInDate(String(fd.get("moveIn") ?? moveIn));
+    if (moveInDate !== moveIn) setMoveIn(moveInDate);
+    if (!moveInDate || moveInDate < todayIsoDate()) {
+      setError(
+        isNightStay
+          ? "Check-in date must be today or a future date — past dates are not allowed."
+          : "Move-in date must be today or a future date — past dates are not allowed.",
+      );
       return;
     }
     setError(null);
@@ -181,7 +330,7 @@ function BookingForm() {
         seats_booked: seats,
         stay_unit: stayUnit,
         ...(isNightStay ? { nights } : { months, months_to_pay: monthsToPay }),
-        move_in: moveIn,
+        move_in: moveInDate,
         guest_name: String(fd.get("fullName") ?? ""),
         guest_email: String(fd.get("email") ?? ""),
         guest_phone: String(fd.get("phone") ?? ""),
@@ -190,6 +339,9 @@ function BookingForm() {
         currency,
       });
       setSuccess({ booking: result.booking, contact: result.contact });
+      if (typeof window !== "undefined") {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Booking failed");
     } finally {
@@ -202,136 +354,25 @@ function BookingForm() {
     const contact = resolvePropertyContact(apiContact);
     const phoneDisplay = contact.phone ? formatPhoneForDisplay(contact.phone) : null;
     const hasContact = Boolean(contact.whatsapp_url || contact.phoneTel);
+    const payAtCheckIn =
+      (booking.amount_paid_upfront ?? booking.total_amount) + (booking.security_amount ?? 0);
+    const stayLabel =
+      booking.stay_unit === "night" && booking.nights
+        ? `${booking.nights} night${booking.nights === 1 ? "" : "s"}`
+        : `${booking.months} month${booking.months === 1 ? "" : "s"}`;
+    const ref = booking.id.slice(-8).toUpperCase();
 
     return (
-      <div className="min-h-screen bg-background text-foreground">
-        <SiteHeader />
-        <section className="container mx-auto max-w-xl px-4 py-16 md:py-20">
-          <div className="text-center">
-            <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-600">
-              <Check className="h-8 w-8" />
-            </div>
-            <h1 className="text-3xl font-extrabold tracking-tight md:text-4xl">Booking request sent</h1>
-            <p className="mt-3 text-muted-foreground">
-              {booking.seats_booked} seat(s) in <strong className="text-foreground">{booking.room_title}</strong> ·{" "}
-              {formatPrice(
-                (booking.amount_paid_upfront ?? booking.total_amount) +
-                  (booking.security_amount ?? 0),
-              )}{" "}
-              to pay at check-in
-              {booking.stay_unit === "night" && booking.nights
-                ? ` (${booking.nights} night(s))`
-                : booking.months_paid_upfront && booking.months_paid_upfront < booking.months
-                  ? ` · rent ${booking.months_paid_upfront} of ${booking.months} mo`
-                  : ` · rent ${booking.months} month(s)`}
-              {(booking.security_amount ?? 0) > 0 && (
-                <> · security {formatPrice(booking.security_amount!)}</>
-              )}
-              {(booking.amount_outstanding ?? 0) > 0 && (
-                <>
-                  {" "}
-                  · {formatPrice(booking.amount_outstanding!)} rent due later
-                </>
-              )}
-              {booking.coupon_code && (
-                <>
-                  {" "}
-                  <span className="text-primary">(coupon {booking.coupon_code} applied)</span>
-                </>
-              )}
-            </p>
-            {booking.discount_amount != null && booking.discount_amount > 0 && (
-              <p className="mt-1 text-sm text-emerald-600">
-                You saved {formatPrice(booking.discount_amount)}
-                {booking.original_total != null && <> off {formatPrice(booking.original_total)}</>}
-              </p>
-            )}
-            <p className="mt-2 text-sm text-muted-foreground">
-              Move-in: {booking.move_in} · Reference #{booking.id.slice(-8).toUpperCase()}
-            </p>
-            <p className="mt-4 text-sm text-muted-foreground">
-              We&apos;ve also sent a confirmation email to{" "}
-              <strong className="text-foreground">{booking.guest_email}</strong>.
-            </p>
-          </div>
-
-          <Card className="mt-8 overflow-hidden rounded-3xl border-2 border-primary/25 shadow-[var(--shadow-card)]">
-            <div className="bg-[image:var(--gradient-hero)] px-6 py-4 text-center text-primary-foreground">
-              <p className="text-xs font-bold uppercase tracking-widest opacity-90">Action required</p>
-              <p className="mt-1 text-lg font-extrabold">Contact us to confirm your booking</p>
-            </div>
-            <CardContent className="space-y-5 p-6">
-              <p className="text-center text-sm leading-relaxed text-muted-foreground">
-                Your booking is <strong className="text-foreground">pending</strong> until we hear from you. No online
-                payment was taken — please message or call using the details below so we can confirm your seat(s).
-              </p>
-
-              {hasContact ? (
-                <div className="space-y-3">
-                  {contact.whatsapp_url && contact.whatsappDisplay && (
-                    <div className="rounded-2xl border-2 border-emerald-500/30 bg-emerald-500/5 p-4">
-                      <div className="flex items-start gap-3">
-                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-white">
-                          <MessageCircle className="h-5 w-5" />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-xs font-bold uppercase tracking-wide text-emerald-700">WhatsApp</p>
-                          <p className="mt-0.5 text-xl font-extrabold tracking-tight text-foreground">
-                            {contact.whatsappDisplay}
-                          </p>
-                          <p className="mt-1 text-xs text-muted-foreground">Tap to open chat with your booking details</p>
-                        </div>
-                      </div>
-                      <Button asChild className="mt-4 w-full rounded-full bg-emerald-600 font-bold hover:bg-emerald-700" size="lg">
-                        <a href={contact.whatsapp_url} target="_blank" rel="noopener noreferrer">
-                          <MessageCircle className="h-5 w-5" /> Message on WhatsApp
-                        </a>
-                      </Button>
-                    </div>
-                  )}
-
-                  {phoneDisplay && contact.phoneTel && (
-                    <div className="rounded-2xl border-2 border-primary/20 bg-muted/40 p-4">
-                      <div className="flex items-start gap-3">
-                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-                          <Phone className="h-5 w-5" />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-xs font-bold uppercase tracking-wide text-primary">Phone / call</p>
-                          <p className="mt-0.5 text-xl font-extrabold tracking-tight text-foreground">{phoneDisplay}</p>
-                          <p className="mt-1 text-xs text-muted-foreground">
-                            Call {contact.name} to confirm booking #{booking.id.slice(-8).toUpperCase()}
-                          </p>
-                        </div>
-                      </div>
-                      <Button asChild variant="outline" className="mt-4 w-full rounded-full border-2 font-bold" size="lg">
-                        <a href={`tel:${contact.phoneTel}`}>
-                          <Phone className="h-5 w-5" /> Call {phoneDisplay}
-                        </a>
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <p className="rounded-2xl border-2 border-dashed bg-muted/50 p-4 text-center text-sm text-muted-foreground">
-                  Contact numbers are not configured yet. Please check your confirmation email or visit the{" "}
-                  <Link href="/contact" className="font-bold text-primary underline">
-                    contact page
-                  </Link>
-                  .
-                </p>
-              )}
-            </CardContent>
-          </Card>
-
-          <div className="mt-8 text-center">
-            <Button asChild variant="ghost" className="rounded-full font-bold">
-              <Link href="/rooms">Browse more rooms</Link>
-            </Button>
-          </div>
-        </section>
-        <SiteFooter />
-      </div>
+      <BookingSuccessView
+        booking={booking}
+        formatPrice={formatPrice}
+        payAtCheckIn={payAtCheckIn}
+        stayLabel={stayLabel}
+        refCode={ref}
+        hasContact={hasContact}
+        contact={contact}
+        phoneDisplay={phoneDisplay}
+      />
     );
   }
 
@@ -579,11 +620,39 @@ function BookingForm() {
                   <Input name="phone" type="tel" required maxLength={20} placeholder="+92 331 0008196" />
                 </div>
                 <div>
-                  <Label className="mb-2 block text-sm font-bold">
+                  <Label className="mb-2 block text-sm font-bold" htmlFor="moveIn">
                     {isNightStay ? "Check-in date" : "Move-in date"}
                   </Label>
-                  <Input name="moveIn" type="date" min={todayIsoDate()} required />
-                  <p className="mt-1 text-xs text-muted-foreground">Today or a future date only.</p>
+                  <Input
+                    id="moveIn"
+                    name="moveIn"
+                    type="date"
+                    required
+                    min={todayIsoDate()}
+                    value={moveIn}
+                    onChange={(e) => {
+                      const next = e.target.value;
+                      if (!next) {
+                        setMoveIn(todayIsoDate());
+                        return;
+                      }
+                      const clamped = clampMoveInDate(next);
+                      setMoveIn(clamped);
+                      if (clamped !== next.slice(0, 10)) {
+                        setError(
+                          isNightStay
+                            ? "Check-in cannot be in the past. Please choose today or a later date."
+                            : "Move-in cannot be in the past. Please choose today or a later date.",
+                        );
+                      } else {
+                        setError(null);
+                      }
+                    }}
+                    onBlur={() => setMoveIn((prev) => clampMoveInDate(prev))}
+                  />
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Today or any future date — past dates cannot be selected.
+                  </p>
                 </div>
                 <div className="sm:col-span-2">
                   <Label className="mb-2 block text-sm font-bold">Notes (optional)</Label>
