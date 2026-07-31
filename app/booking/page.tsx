@@ -423,7 +423,8 @@ function BookingForm() {
                     <SelectContent>
                       {rooms.map((r) => (
                         <SelectItem key={r.id} value={r.id}>
-                          {r.title} — {formatSeatsFree(r.beds_available)}
+                          {r.room_number != null ? `${r.room_number} · ${r.title}` : r.title} —{" "}
+                          {formatSeatsFree(r.beds_available)}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -683,7 +684,9 @@ function BookingForm() {
               <img src={room.img} alt={room.title} className="h-44 w-full object-cover" />
               <CardContent className="space-y-4 p-6">
                 <div>
-                  <h3 className="text-lg font-extrabold">{room.title}</h3>
+                  <h3 className="text-lg font-extrabold">
+                    {room.room_number != null ? `${room.room_number} · ${room.title}` : room.title}
+                  </h3>
                   <div className="text-xs text-muted-foreground">{room.type}</div>
                 </div>
                 <div className="flex gap-4 text-sm text-muted-foreground">

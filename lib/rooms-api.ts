@@ -8,6 +8,7 @@ export { AMENITY_LIST, ROOM_TYPES };
 export type ApiRoom = {
   id: string;
   title: string;
+  room_number?: number | null;
   description: string;
   price_per_night: number;
   price_per_night_usd: number;
@@ -32,6 +33,7 @@ export type MarketingRoom = {
   id: string;
   type: string;
   title: string;
+  room_number: number | null;
   price: number;
   price_usd: number;
   price_pkr: number;
@@ -66,12 +68,20 @@ export function formatSeatsFree(count: number) {
   return `${count} seats free`;
 }
 
+export function formatMarketingRoomTitle(room: Pick<MarketingRoom, "title" | "room_number">) {
+  if (room.room_number != null) {
+    return `${room.room_number} · ${room.title}`;
+  }
+  return room.title;
+}
+
 export function mapApiRoomToMarketing(room: ApiRoom): MarketingRoom {
   const images = room.images?.length ? room.images : [PLACEHOLDER_IMG];
   return {
     id: room.id,
     type: room.category,
     title: room.title,
+    room_number: room.room_number ?? null,
     price: room.price_per_night,
     price_usd: room.price_per_night_usd,
     price_pkr: room.price_per_night_pkr,

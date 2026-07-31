@@ -6,7 +6,7 @@ import {
   SESSION_KEY,
 } from "@/lib/auth-types";
 
-export type StoredSession = { user: AuthUser; token: string };
+export type StoredSession = { user: AuthUser; token: string; refreshToken?: string };
 
 export function loadSession(): StoredSession | null {
   if (typeof window === "undefined") return null;
@@ -15,6 +15,7 @@ export function loadSession(): StoredSession | null {
   try {
     const parsed = JSON.parse(raw) as StoredSession;
     if (!parsed?.user || typeof parsed.token !== "string") return null;
+    if (parsed.refreshToken != null && typeof parsed.refreshToken !== "string") return null;
     return parsed;
   } catch {
     return null;
@@ -31,6 +32,11 @@ export function saveSession(session: StoredSession | null, remember: boolean) {
     if (remember) localStorage.setItem(SESSION_KEY, raw);
     else sessionStorage.setItem(SESSION_KEY, raw);
   }
+}
+
+export function sessionRemembered(): boolean {
+  if (typeof window === "undefined") return false;
+  return Boolean(localStorage.getItem(SESSION_KEY));
 }
 
 export function getPendingSignupEmail(): string | null {

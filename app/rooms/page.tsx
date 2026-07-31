@@ -218,7 +218,9 @@ export default function RoomsPage() {
                   <CardContent className="space-y-4 p-6">
                     <div className="flex items-baseline justify-between">
                       <div>
-                        <h3 className="text-xl font-extrabold">{r.title}</h3>
+                        <h3 className="text-xl font-extrabold">
+                          {r.room_number != null ? `${r.room_number} · ${r.title}` : r.title}
+                        </h3>
                         <div className="mt-0.5 text-xs text-muted-foreground">{r.type}</div>
                       </div>
                       <div className="text-right">

@@ -37,7 +37,7 @@ export type SiteSettings = {
 
 export const SITE_SETTINGS_DEFAULTS: SiteSettings = {
   hotelName: "Stay Inn Hostels",
-  tagline: "Seat by Seat.",
+  tagline: "Live your journey, stay with us",
   description:
     "Affordable, secure and spotlessly clean accommodation built for students and working professionals. Pick your seat — we handle the rest.",
   email: "info@stayinnhostels.com",

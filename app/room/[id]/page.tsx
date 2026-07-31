@@ -138,7 +138,9 @@ export default function RoomDetailPage() {
                   <Badge className="rounded-full border-0 bg-accent font-bold text-accent-foreground">{room.badge}</Badge>
                 )}
               </div>
-              <h1 className="text-3xl font-extrabold tracking-tight md:text-4xl">{room.title}</h1>
+              <h1 className="text-3xl font-extrabold tracking-tight md:text-4xl">
+                {room.room_number != null ? `${room.room_number} · ${room.title}` : room.title}
+              </h1>
               <p className="mt-3 text-muted-foreground">{room.desc}</p>
             </div>
 

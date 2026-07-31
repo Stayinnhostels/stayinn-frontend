@@ -49,6 +49,7 @@ const AuthContext = React.createContext<AuthContextValue | null>(null);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = React.useState<AuthUser | null>(null);
   const [token, setToken] = React.useState<string | null>(null);
+  const [refreshToken, setRefreshToken] = React.useState<string | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [pendingSignupEmail, setPendingEmail] = React.useState<string | null>(null);
 
@@ -57,22 +58,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (session) {
       setUser(session.user);
       setToken(session.token);
+      setRefreshToken(session.refreshToken ?? null);
     }
     setPendingEmail(getPendingSignupEmail());
     setLoading(false);
   }, []);
 
+  React.useEffect(() => {
+    function onRefreshed(event: Event) {
+      const detail = (event as CustomEvent<{ token: string; refreshToken: string; user: AuthUser }>).detail;
+      if (!detail?.token) return;
+      setToken(detail.token);
+      setRefreshToken(detail.refreshToken);
+      if (detail.user) setUser(detail.user);
+    }
+    window.addEventListener("stayinn:session-refreshed", onRefreshed);
+    return () => window.removeEventListener("stayinn:session-refreshed", onRefreshed);
+  }, []);
+
   const logout = React.useCallback(async () => {
-    const currentToken = token;
     try {
-      if (currentToken) await postLogout(currentToken);
+      if (token || refreshToken) await postLogout(token, refreshToken);
     } catch {
       // Clear local session even if revoke fails.
     }
     saveSession(null, true);
     setUser(null);
     setToken(null);
-  }, [token]);
+    setRefreshToken(null);
+  }, [token, refreshToken]);
 
   const value = React.useMemo<AuthContextValue>(
     () => ({
@@ -83,7 +97,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       pendingSignupEmail,
 
       async login(email, password, remember = true) {
-        const { user: nextUser, token: nextToken } = await postLogin(email, password);
+        const {
+          user: nextUser,
+          token: nextToken,
+          refreshToken: nextRefresh,
+        } = await postLogin(email, password);
         if (!nextUser.emailVerified && nextUser.role === "user") {
           setPendingSignupEmail(email);
           setPendingEmail(email.trim().toLowerCase());
@@ -95,7 +113,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setPendingEmail(null);
         setUser(nextUser);
         setToken(nextToken);
-        saveSession({ user: nextUser, token: nextToken }, remember);
+        setRefreshToken(nextRefresh);
+        saveSession({ user: nextUser, token: nextToken, refreshToken: nextRefresh }, remember);
         return nextUser;
       },
 
@@ -113,6 +132,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setPendingReturnPath(from);
         setUser(null);
         setToken(null);
+        setRefreshToken(null);
         saveSession(null, true);
         return created;
       },

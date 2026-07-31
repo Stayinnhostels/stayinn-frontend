@@ -6,6 +6,7 @@ type LoginResponse = {
   success: boolean;
   message?: string;
   token: string;
+  refreshToken: string;
   user: BackendUserDto;
 };
 
@@ -15,15 +16,23 @@ type SignupResponse = {
   user: BackendUserDto;
 };
 
-export async function postLogin(email: string, password: string): Promise<{ user: AuthUser; token: string }> {
+export async function postLogin(
+  email: string,
+  password: string,
+): Promise<{ user: AuthUser; token: string; refreshToken: string }> {
   const data = await apiFetch<LoginResponse>("/api/auth/login", {
     method: "POST",
     body: JSON.stringify({ email: email.trim().toLowerCase(), password }),
+    skipAuthRefresh: true,
   });
-  if (!data.success || !data.token || !data.user) {
+  if (!data.success || !data.token || !data.refreshToken || !data.user) {
     throw new Error(data.message ?? "Invalid response from server");
   }
-  return { user: mapBackendUserToAuthUser(data.user), token: data.token };
+  return {
+    user: mapBackendUserToAuthUser(data.user),
+    token: data.token,
+    refreshToken: data.refreshToken,
+  };
 }
 
 export async function postSignup(input: {
@@ -42,6 +51,7 @@ export async function postSignup(input: {
   const data = await apiFetch<SignupResponse>("/api/auth/signup", {
     method: "POST",
     body: JSON.stringify(body),
+    skipAuthRefresh: true,
   });
   if (!data.success || !data.user) {
     throw new Error(data.message ?? "Signup failed");
@@ -49,8 +59,13 @@ export async function postSignup(input: {
   return { user: mapBackendUserToAuthUser(data.user), message: data.message };
 }
 
-export async function postLogout(token: string): Promise<void> {
-  await apiFetch("/api/auth/logout", { method: "POST", token });
+export async function postLogout(token: string | null | undefined, refreshToken?: string | null): Promise<void> {
+  await apiFetch("/api/auth/logout", {
+    method: "POST",
+    token: token ?? undefined,
+    body: JSON.stringify(refreshToken ? { refreshToken } : {}),
+    skipAuthRefresh: true,
+  });
 }
 
 export async function postResendVerification(email: string, from?: string): Promise<void> {
@@ -60,6 +75,7 @@ export async function postResendVerification(email: string, from?: string): Prom
   await apiFetch("/api/auth/resend-verification", {
     method: "POST",
     body: JSON.stringify(body),
+    skipAuthRefresh: true,
   });
 }
 
@@ -67,6 +83,7 @@ export async function postVerifyEmail(token: string): Promise<void> {
   const data = await apiFetch<{ success: boolean; message?: string }>("/api/auth/verify-email", {
     method: "POST",
     body: JSON.stringify({ token }),
+    skipAuthRefresh: true,
   });
   if (!data.success) {
     throw new Error(data.message ?? "Verification failed");
@@ -77,6 +94,7 @@ export async function postForgotPassword(email: string): Promise<void> {
   await apiFetch("/api/auth/forgot-password", {
     method: "POST",
     body: JSON.stringify({ email: email.trim().toLowerCase() }),
+    skipAuthRefresh: true,
   });
 }
 
@@ -84,5 +102,6 @@ export async function postResetPassword(token: string, password: string): Promis
   await apiFetch("/api/auth/reset-password", {
     method: "POST",
     body: JSON.stringify({ token, password }),
+    skipAuthRefresh: true,
   });
 }
