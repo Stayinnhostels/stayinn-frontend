@@ -27,7 +27,7 @@ export default function TermsPage() {
           LEGAL
         </Badge>
         <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight leading-[1.05]">Terms &amp; Conditions</h1>
-        <p className="mt-4 text-sm text-muted-foreground">Last updated: May 9, 2026</p>
+        <p className="mt-4 text-sm text-muted-foreground">Last updated: August 1, 2026</p>
       </section>
 
       <section className="container mx-auto px-4 pb-20 max-w-3xl space-y-10">
@@ -43,19 +43,32 @@ export default function TermsPage() {
           </p>
         </Section>
 
-        <Section title="3. Cancellation Policy">
+        <Section title="3. Minimum Stay &amp; Security Deposit">
+          <p>
+            A minimum stay of 3 months is required. If you leave earlier, the security deposit is not
+            refundable.
+          </p>
+        </Section>
+
+        <Section title="4. Notice Period to Vacate">
+          <p>
+            After 3 months, you must give at least 1 month written notice before vacating the hostel.
+          </p>
+        </Section>
+
+        <Section title="5. Cancellation Policy">
           <p>
             Cancellations made 7 or more days before check-in receive a full refund of the first month&apos;s rent. Cancellations within 7 days forfeit the security deposit. No refunds are issued after check-in for unused days unless required by law.
           </p>
         </Section>
 
-        <Section title="4. Refund Rules">
+        <Section title="6. Refund Rules">
           <p>
-            Approved refunds are processed to the original payment method within 7 business days. Bank or payment processor delays may add an additional 3–5 days. Refunds are not provided for early move-outs unless explicitly stated in your booking agreement.
+            Approved refunds are processed to the original payment method within 7 business days. Bank or payment processor delays may add an additional 3–5 days. Refunds are not provided for early move-outs unless explicitly stated in your booking agreement, and are always subject to the minimum stay and notice rules above.
           </p>
         </Section>
 
-        <Section title="5. House Rules & Guest Behaviour">
+        <Section title="7. House Rules & Guest Behaviour">
           <p>Residents are expected to maintain a respectful, quiet, and clean environment. The following are strictly prohibited:</p>
           <ul className="list-disc pl-6 space-y-1">
             <li>Smoking inside rooms or common indoor areas</li>
@@ -67,28 +80,28 @@ export default function TermsPage() {
           <p>Violations may result in warnings, fines deducted from your security deposit, or immediate termination of stay without refund.</p>
         </Section>
 
-        <Section title="6. Liability">
+        <Section title="8. Liability">
           <p>
             Stay Inn Hostels is not liable for loss, theft, or damage to personal belongings. Residents are strongly encouraged to use the in-room lockers and obtain personal travel or contents insurance.
           </p>
           <p>To the maximum extent permitted by law, our total liability arising out of any stay is limited to the amount paid by the resident for the relevant booking.</p>
         </Section>
 
-        <Section title="7. Use of Facilities">
+        <Section title="9. Use of Facilities">
           <p>
             Shared facilities — kitchen, lounge, gym, laundry — are provided &quot;as is&quot;. Residents use these facilities at their own risk and must follow posted safety instructions.
           </p>
         </Section>
 
-        <Section title="8. Modifications">
+        <Section title="10. Modifications">
           <p>We may update these Terms &amp; Conditions periodically. Continued use of our services after changes are posted constitutes acceptance of the revised terms.</p>
         </Section>
 
-        <Section title="9. Governing Law">
+        <Section title="11. Governing Law">
           <p>These terms are governed by the laws of India. Any disputes will be subject to the exclusive jurisdiction of the courts in Bengaluru, Karnataka.</p>
         </Section>
 
-        <Section title="10. Contact">
+        <Section title="12. Contact">
           <p>
             For questions about these terms, email <span className="text-primary font-semibold">info@stayinnhostels.com</span>.
           </p>

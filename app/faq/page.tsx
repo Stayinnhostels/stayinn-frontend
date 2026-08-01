@@ -39,11 +39,15 @@ const faqs = [
   },
   {
     q: "What is the minimum stay duration?",
-    a: "Minimum stay is 1 month for monthly bookings. Short-term nightly bookings are available for selected rooms — check the room details page.",
+    a: "A minimum stay of 3 months is required. If you leave earlier, the security deposit is not refundable.",
+  },
+  {
+    q: "How much notice do I need to give before leaving?",
+    a: "After 3 months, you must give at least 1 month written notice before vacating the hostel.",
   },
   {
     q: "What is the cancellation and refund policy?",
-    a: "Cancellations made 7+ days before check-in are fully refundable. Within 7 days, the security deposit is forfeited. Refunds are processed within 7 business days.",
+    a: "Cancellations 7+ days before check-in get a full rent refund. Within 7 days, security is forfeited. Leaving before 3 months also means security is not refundable.",
   },
   { q: "Are pets allowed?", a: "Unfortunately, pets are not allowed in our hostels at this time." },
   {

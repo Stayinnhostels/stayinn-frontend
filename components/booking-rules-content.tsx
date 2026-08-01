@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { CalendarClock, Clock, FileText, Moon, Shield } from "lucide-react";
+import { CalendarClock, Clock, FileText, Moon, ScrollText, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useSiteSettings } from "@/components/site-settings-provider";
 import {
+  STAY_SECURITY_NOTICE_POLICY,
   cancellationPolicyDescription,
   cancellationPolicyTitle,
   formatTime24h,
@@ -74,6 +75,22 @@ export function BookingRulesContent() {
             value={`Up to ${s.advanceBookingDays} days before move-in`}
           />
           <RuleRow label="Deposit required" value={`${s.depositPercent}% of total rent`} />
+        </CardContent>
+      </Card>
+
+      <Card className="border-2 shadow-[var(--shadow-card)]">
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <ScrollText className="h-5 w-5 text-primary" />
+            {STAY_SECURITY_NOTICE_POLICY.title}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="pt-0 space-y-2">
+          {STAY_SECURITY_NOTICE_POLICY.paragraphs.map((paragraph) => (
+            <p key={paragraph} className="text-sm text-muted-foreground leading-relaxed">
+              {paragraph}
+            </p>
+          ))}
         </CardContent>
       </Card>
 
