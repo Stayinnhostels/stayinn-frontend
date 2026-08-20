@@ -25,6 +25,7 @@ import {
   MapPin,
   ExternalLink,
 } from "lucide-react";
+import { useAuth } from "@/lib/auth-context";
 import { useCurrency } from "@/components/currency-provider";
 import { useSiteSettings } from "@/components/site-settings-provider";
 import { getApiBaseUrl } from "@/lib/api-client";
@@ -146,6 +147,9 @@ function BookingSuccessView({
           ) : null}
 
           <div className="mt-6 space-y-2.5">
+            <Button asChild variant="outline" className="w-full font-bold" size="lg">
+              <Link href="/account/bookings">View in my account</Link>
+            </Button>
             {hasContact ? (
               <>
                 {contact.whatsapp_url ? (
@@ -181,6 +185,7 @@ function BookingSuccessView({
 }
 
 function BookingForm() {
+  const { user } = useAuth();
   const { currency, formatPrice, ready } = useCurrency();
   const searchParams = useSearchParams();
   const roomIdFromQuery = searchParams.get("roomId") ?? undefined;
@@ -610,11 +615,26 @@ function BookingForm() {
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
                   <Label className="mb-2 block text-sm font-bold">Full name</Label>
-                  <Input name="fullName" required maxLength={80} placeholder="Aarav Mehta" />
+                  <Input
+                    name="fullName"
+                    required
+                    maxLength={80}
+                    placeholder="Aarav Mehta"
+                    defaultValue={user?.fullName ?? ""}
+                    key={`name-${user?.id ?? "guest"}`}
+                  />
                 </div>
                 <div>
                   <Label className="mb-2 block text-sm font-bold">Email</Label>
-                  <Input name="email" type="email" required maxLength={120} placeholder="you@email.com" />
+                  <Input
+                    name="email"
+                    type="email"
+                    required
+                    maxLength={120}
+                    placeholder="you@email.com"
+                    defaultValue={user?.email ?? ""}
+                    key={`email-${user?.id ?? "guest"}`}
+                  />
                 </div>
                 <div>
                   <Label className="mb-2 block text-sm font-bold">Phone</Label>

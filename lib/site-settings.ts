@@ -72,11 +72,29 @@ export function brandShortName(hotelName: string) {
   return first || trimmed;
 }
 
+async function isFetchingThisNextApp(apiBase: string) {
+  if (typeof window !== "undefined") return false;
+  try {
+    const { headers } = await import("next/headers");
+    const host = (await headers()).get("host");
+    if (!host) return false;
+    return new URL(apiBase).host === host;
+  } catch {
+    return false;
+  }
+}
+
 export async function fetchPublicSiteSettings(): Promise<SiteSettings> {
   try {
     const base = getApiBaseUrl();
+    // Root layout runs for 404s. If the API base is this Next server, fetching
+    // /api/v1/settings/public would recurse and flood the dev log.
+    if (await isFetchingThisNextApp(base)) {
+      return SITE_SETTINGS_DEFAULTS;
+    }
     const res = await fetch(`${base}/api/v1/settings/public`, {
       next: { revalidate: 60 },
+      signal: AbortSignal.timeout(4000),
     });
     if (!res.ok) return SITE_SETTINGS_DEFAULTS;
     const data = (await res.json()) as { success?: boolean; settings?: SiteSettings };

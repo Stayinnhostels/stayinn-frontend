@@ -33,8 +33,9 @@ function currentPath(): string {
 
 export function loginHref(returnTo?: string, options?: { verified?: boolean }): string {
   const target = returnTo ?? currentPath();
+  const dest = !target || target === "/" ? "/account" : target;
   const params = new URLSearchParams();
-  if (target && target !== "/") params.set("from", target);
+  if (dest && dest !== "/") params.set("from", dest);
   if (options?.verified) params.set("verified", "1");
   const q = params.toString();
   return q ? `/login?${q}` : "/login";
@@ -42,7 +43,8 @@ export function loginHref(returnTo?: string, options?: { verified?: boolean }): 
 
 export function signupHref(returnTo?: string): string {
   const target = returnTo ?? currentPath();
-  return `/signup?from=${encodeURIComponent(target)}`;
+  const dest = !target || target === "/" ? "/account" : target;
+  return `/signup?from=${encodeURIComponent(dest)}`;
 }
 
 export function readReturnPathFromSearch(params: URLSearchParams): string | null {

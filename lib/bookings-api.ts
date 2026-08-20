@@ -1,4 +1,5 @@
-import { apiFetch } from "@/lib/api-client";
+import { apiFetch } from "@/lib/api/client";
+import { loadSession } from "@/lib/auth-session";
 import type { DisplayCurrency } from "@/lib/currency";
 import type { MarketingRoom } from "@/lib/rooms-api";
 
@@ -61,9 +62,11 @@ type CreateBookingResponse = {
 };
 
 export async function createBookingApi(input: CreateBookingInput) {
+  const token = loadSession()?.token;
   const data = await apiFetch<CreateBookingResponse>("/api/v1/bookings", {
     method: "POST",
     body: JSON.stringify(input),
+    token,
   });
   if (!data.success || !data.booking) {
     throw new Error(data.message ?? "Booking failed");

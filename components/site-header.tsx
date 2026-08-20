@@ -81,7 +81,7 @@ function SiteHeaderInner() {
                 <DropdownMenuLabel className="font-bold">{user.email}</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
-                  <Link href={dashboardHref()}>Dashboard</Link>
+                  <Link href={dashboardHref()}>My account</Link>
                 </DropdownMenuItem>
                 {isAdmin && (
                   <DropdownMenuItem asChild>
@@ -124,6 +124,15 @@ function SiteHeaderInner() {
                 {nav.map((n) => (
                   <NavLink key={n.href} href={n.href} label={n.label} exact={n.href === "/"} />
                 ))}
+                {user ? (
+                  <Link href={dashboardHref()} className="hover:text-primary">
+                    My account
+                  </Link>
+                ) : (
+                  <Link href={signInHref} className="hover:text-primary">
+                    Sign in
+                  </Link>
+                )}
                 <Link
                   href="/booking"
                   className={`mt-2 inline-flex items-center justify-center gap-1.5 ${bookSeatCtaClass} text-primary-foreground`}

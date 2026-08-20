@@ -31,7 +31,7 @@ function LoginForm() {
   const [showPw, setShowPw] = useState(false);
 
   const returnTo = useMemo(
-    () => safeReturnPath(readReturnPathFromSearch(searchParams)),
+    () => safeReturnPath(readReturnPathFromSearch(searchParams), "/account"),
     [searchParams],
   );
 

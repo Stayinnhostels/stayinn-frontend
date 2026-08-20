@@ -12,7 +12,7 @@ function WelcomeRedirect() {
   const { user, loading } = useAuth();
 
   const returnTo = useMemo(
-    () => safeReturnPath(readReturnPathFromSearch(searchParams)),
+    () => safeReturnPath(readReturnPathFromSearch(searchParams), "/account"),
     [searchParams],
   );
 

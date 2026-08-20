@@ -9,13 +9,14 @@ import {
   postResetPassword,
   postSignup,
 } from "@/lib/api/auth";
+import { patchMe } from "@/lib/api/me";
 import {
-  clearPendingReturnPath,
   clearPendingSignupEmail,
   getPendingReturnPath,
   getPendingSignupEmail,
   loadSession,
   saveSession,
+  sessionRemembered,
   setPendingReturnPath,
   setPendingSignupEmail,
 } from "@/lib/auth-session";
@@ -42,6 +43,7 @@ interface AuthContextValue {
   resendVerificationEmail: (returnPath?: string) => Promise<void>;
   requestPasswordReset: (email: string) => Promise<void>;
   resetPassword: (token: string, password: string) => Promise<void>;
+  updateProfile: (fullName: string) => Promise<AuthUser>;
 }
 
 const AuthContext = React.createContext<AuthContextValue | null>(null);
@@ -155,8 +157,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       async resetPassword(resetToken, password) {
         await postResetPassword(resetToken, password);
       },
+
+      async updateProfile(fullName) {
+        if (!token) {
+          throw new Error("Sign in required");
+        }
+        const { user: nextUser } = await patchMe(token, { name: fullName.trim() });
+        setUser(nextUser);
+        saveSession(
+          { user: nextUser, token, refreshToken: refreshToken ?? undefined },
+          sessionRemembered(),
+        );
+        return nextUser;
+      },
     }),
-    [user, token, loading, logout, pendingSignupEmail],
+    [user, token, refreshToken, loading, logout, pendingSignupEmail],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
