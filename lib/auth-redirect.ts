@@ -5,6 +5,7 @@ const AUTH_ONLY_PATHS = [
   "/otp",
   "/forgot-password",
   "/reset-password",
+  "/set-password",
   "/welcome",
 ];
 

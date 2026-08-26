@@ -8,6 +8,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { ArrowLeft, CheckCircle2, Loader2, Mail } from "lucide-react";
 import { AuthLayout } from "@/components/auth/auth-layout";
+import { AUTH_FIELD, AUTH_ICON, AUTH_LABEL, AUTH_SUBMIT } from "@/components/auth/auth-field";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -50,8 +51,8 @@ export default function ForgotPasswordPage() {
     >
       {sent ? (
         <div className="space-y-5">
-          <div className="rounded-2xl border-2 p-5 flex items-start gap-3 bg-primary/5">
-            <CheckCircle2 className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+          <div className="flex items-start gap-3 rounded-2xl border border-primary/20 bg-primary/5 p-5">
+            <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
             <p className="text-sm text-muted-foreground">
               The link expires in 30 minutes. Don&apos;t see it? Check your spam folder or try again.
             </p>
@@ -63,16 +64,16 @@ export default function ForgotPasswordPage() {
       ) : (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
           <div className="space-y-2">
-            <Label htmlFor="email" className="font-semibold">
+            <Label htmlFor="email" className={AUTH_LABEL}>
               Email
             </Label>
             <div className="relative">
-              <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input id="email" type="email" autoComplete="email" placeholder="you@email.com" className="pl-10 h-11 rounded-full" {...register("email")} />
+              <Mail className={AUTH_ICON} />
+              <Input id="email" type="email" autoComplete="email" placeholder="you@email.com" className={`${AUTH_FIELD} pl-10`} {...register("email")} />
             </div>
             {errors.email && <p className="text-xs text-destructive font-medium">{errors.email.message}</p>}
           </div>
-          <Button type="submit" disabled={isSubmitting} size="lg" className="w-full rounded-full font-bold shadow-[var(--shadow-soft)]">
+          <Button type="submit" disabled={isSubmitting} size="lg" className={AUTH_SUBMIT}>
             {isSubmitting ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" /> Sending…

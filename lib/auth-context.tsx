@@ -7,6 +7,7 @@ import {
   postLogout,
   postResendVerification,
   postResetPassword,
+  postSetPassword,
   postSignup,
 } from "@/lib/api/auth";
 import { patchMe } from "@/lib/api/me";
@@ -36,13 +37,13 @@ interface AuthContextValue {
     fullName: string;
     email: string;
     password: string;
-    role?: string;
     returnPath?: string;
   }) => Promise<AuthUser>;
   logout: () => Promise<void>;
   resendVerificationEmail: (returnPath?: string) => Promise<void>;
   requestPasswordReset: (email: string) => Promise<void>;
   resetPassword: (token: string, password: string) => Promise<void>;
+  completePasswordSetup: (token: string, password: string) => Promise<AuthUser>;
   updateProfile: (fullName: string) => Promise<AuthUser>;
 }
 
@@ -156,6 +157,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       async resetPassword(resetToken, password) {
         await postResetPassword(resetToken, password);
+      },
+
+      async completePasswordSetup(setupToken, password) {
+        const {
+          user: nextUser,
+          token: nextToken,
+          refreshToken: nextRefresh,
+        } = await postSetPassword(setupToken, password);
+        clearPendingSignupEmail();
+        setPendingEmail(null);
+        setUser(nextUser);
+        setToken(nextToken);
+        setRefreshToken(nextRefresh);
+        saveSession({ user: nextUser, token: nextToken, refreshToken: nextRefresh }, true);
+        return nextUser;
       },
 
       async updateProfile(fullName) {

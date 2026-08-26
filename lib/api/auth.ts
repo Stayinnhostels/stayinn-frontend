@@ -105,3 +105,22 @@ export async function postResetPassword(token: string, password: string): Promis
     skipAuthRefresh: true,
   });
 }
+
+export async function postSetPassword(
+  token: string,
+  password: string,
+): Promise<{ user: AuthUser; token: string; refreshToken: string }> {
+  const data = await apiFetch<LoginResponse>("/api/auth/set-password", {
+    method: "POST",
+    body: JSON.stringify({ token, password }),
+    skipAuthRefresh: true,
+  });
+  if (!data.success || !data.token || !data.refreshToken || !data.user) {
+    throw new Error(data.message ?? "Could not create password");
+  }
+  return {
+    user: mapBackendUserToAuthUser(data.user),
+    token: data.token,
+    refreshToken: data.refreshToken,
+  };
+}

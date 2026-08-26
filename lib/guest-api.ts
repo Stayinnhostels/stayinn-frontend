@@ -1,6 +1,7 @@
-import { apiFetch } from "@/lib/api/client";
+import { apiFetch, getApiBaseUrl } from "@/lib/api/client";
 import { loadSession } from "@/lib/auth-session";
 import type { DisplayCurrency } from "@/lib/currency";
+import { filenameFromContentDisposition, triggerBrowserDownload } from "@/lib/download-blob";
 
 export type GuestBookingStatus = "pending" | "confirmed" | "checked_in" | "checked_out" | "cancelled";
 
@@ -104,6 +105,110 @@ export async function fetchMyBooking(id: string) {
     throw new Error(data.message ?? "Booking not found");
   }
   return data.booking;
+}
+
+async function downloadGuestPdf(path: string, fallbackFilename: string) {
+  const token = requireToken();
+  const response = await fetch(`${getApiBaseUrl()}${path}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (!response.ok) {
+    const data = (await response.json().catch(() => ({}))) as { message?: string };
+    throw new Error(data.message ?? `Could not download document (${response.status})`);
+  }
+
+  const blob = await response.blob();
+  const filename = filenameFromContentDisposition(
+    response.headers.get("Content-Disposition"),
+    fallbackFilename,
+  );
+  triggerBrowserDownload(blob, filename);
+}
+
+export async function downloadMyCurrentMonthReceipt(bookingId: string, month: string) {
+  return downloadGuestPdf(
+    `/api/v1/me/bookings/${bookingId}/receipt`,
+    `rent-receipt-${month}.pdf`,
+  );
+}
+
+export async function downloadMyBookingInvoice(bookingId: string) {
+  return downloadGuestPdf(
+    `/api/v1/me/bookings/${bookingId}/invoice`,
+    `booking-invoice-${bookingRef(bookingId)}.pdf`,
+  );
+}
+
+export type GuestBookingRequestType = "cancel" | "room_change" | "additional_seat";
+export type GuestBookingRequestStatus = "pending" | "approved" | "rejected" | "withdrawn";
+
+export type GuestBookingRequest = {
+  id: string;
+  booking_id: string;
+  type: GuestBookingRequestType;
+  type_label: string;
+  status: GuestBookingRequestStatus;
+  reason: string;
+  payload: {
+    requested_room_id?: string;
+    requested_room_title?: string;
+    additional_seats?: number;
+    current_seats?: number;
+    target_seats?: number;
+  };
+  admin_note: string;
+  amount_refunded: number | null;
+  resolved_at: string | null;
+  created_at: string | null;
+};
+
+export async function fetchMyBookingRequests(bookingId: string) {
+  const token = requireToken();
+  const data = await apiFetch<{ success: boolean; message?: string; requests: GuestBookingRequest[] }>(
+    `/api/v1/me/bookings/${bookingId}/requests`,
+    { token },
+  );
+  if (!data.success) {
+    throw new Error(data.message ?? "Could not load requests");
+  }
+  return data.requests ?? [];
+}
+
+export async function createMyBookingRequest(
+  bookingId: string,
+  body: {
+    type: GuestBookingRequestType;
+    reason?: string;
+    requested_room_id?: string;
+    additional_seats?: number;
+  },
+) {
+  const token = requireToken();
+  const data = await apiFetch<{ success: boolean; message?: string; request: GuestBookingRequest }>(
+    `/api/v1/me/bookings/${bookingId}/requests`,
+    {
+      token,
+      method: "POST",
+      body: JSON.stringify(body),
+    },
+  );
+  if (!data.success || !data.request) {
+    throw new Error(data.message ?? "Could not submit request");
+  }
+  return data.request;
+}
+
+export async function withdrawMyBookingRequest(bookingId: string, requestId: string) {
+  const token = requireToken();
+  const data = await apiFetch<{ success: boolean; message?: string; request: GuestBookingRequest }>(
+    `/api/v1/me/bookings/${bookingId}/requests/${requestId}/withdraw`,
+    { token, method: "POST" },
+  );
+  if (!data.success || !data.request) {
+    throw new Error(data.message ?? "Could not withdraw request");
+  }
+  return data.request;
 }
 
 export function bookingRef(id: string) {

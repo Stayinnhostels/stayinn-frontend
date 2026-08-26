@@ -9,7 +9,7 @@ import { Suspense, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Eye, EyeOff, Loader2, Mail, Lock, User } from "lucide-react";
 import { AuthLayout } from "@/components/auth/auth-layout";
-import { SocialButtons, OrDivider } from "@/components/auth/social-buttons";
+import { AUTH_FIELD, AUTH_ICON, AUTH_LABEL, AUTH_SUBMIT } from "@/components/auth/auth-field";
 import { PasswordStrength, getPasswordScore } from "@/components/auth/password-strength";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,7 +23,6 @@ const schema = z
     email: z.string().trim().email("Enter a valid email").max(120),
     password: z.string().min(8, "At least 8 characters").max(72),
     confirmPassword: z.string(),
-    role: z.enum(["athlete", "coach", "academy", "admin"]),
   })
   .refine((d) => d.password === d.confirmPassword, {
     message: "Passwords do not match",
@@ -31,14 +30,6 @@ const schema = z
   });
 
 type FormValues = z.infer<typeof schema>;
-type SignupRole = FormValues["role"];
-
-const roles: { value: SignupRole; label: string; desc: string }[] = [
-  { value: "athlete", label: "Athlete", desc: "Player or trainee" },
-  { value: "coach", label: "Coach", desc: "Trainer or mentor" },
-  { value: "academy", label: "Academy", desc: "Institute or club" },
-  { value: "admin", label: "Admin", desc: "Operations team" },
-];
 
 function SignupForm() {
   const router = useRouter();
@@ -53,7 +44,6 @@ function SignupForm() {
   const {
     register,
     handleSubmit,
-    setValue,
     watch,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
@@ -63,11 +53,9 @@ function SignupForm() {
       email: "",
       password: "",
       confirmPassword: "",
-      role: "athlete",
     },
   });
   const pw = watch("password");
-  const role = watch("role");
 
   const onSubmit = async (values: FormValues) => {
     if (getPasswordScore(values.password) < 2) {
@@ -79,7 +67,6 @@ function SignupForm() {
         fullName: values.fullName,
         email: values.email,
         password: values.password,
-        role: values.role,
         returnPath: returnTo,
       });
       toast.success("Account created! Check your email to verify your account.");
@@ -105,50 +92,47 @@ function SignupForm() {
         </>
       }
     >
-      <SocialButtons />
-      <OrDivider label="or sign up with email" />
-
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
         <div className="space-y-2">
-          <Label htmlFor="fullName" className="font-semibold">
+          <Label htmlFor="fullName" className={AUTH_LABEL}>
             Full name
           </Label>
           <div className="relative">
-            <User className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input id="fullName" autoComplete="name" placeholder="Aarav Mehta" className="pl-10 h-11 rounded-full" {...register("fullName")} />
+            <User className={AUTH_ICON} />
+            <Input id="fullName" autoComplete="name" placeholder="Aarav Mehta" className={`${AUTH_FIELD} pl-10`} {...register("fullName")} />
           </div>
           {errors.fullName && <p className="text-xs text-destructive font-medium">{errors.fullName.message}</p>}
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="email" className="font-semibold">
+          <Label htmlFor="email" className={AUTH_LABEL}>
             Email
           </Label>
           <div className="relative">
-            <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input id="email" type="email" autoComplete="email" placeholder="you@email.com" className="pl-10 h-11 rounded-full" {...register("email")} />
+            <Mail className={AUTH_ICON} />
+            <Input id="email" type="email" autoComplete="email" placeholder="you@email.com" className={`${AUTH_FIELD} pl-10`} {...register("email")} />
           </div>
           {errors.email && <p className="text-xs text-destructive font-medium">{errors.email.message}</p>}
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="password" className="font-semibold">
+          <Label htmlFor="password" className={AUTH_LABEL}>
             Password
           </Label>
           <div className="relative">
-            <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Lock className={AUTH_ICON} />
             <Input
               id="password"
               type={showPw ? "text" : "password"}
               autoComplete="new-password"
               placeholder="At least 8 characters"
-              className="pl-10 pr-10 h-11 rounded-full"
+              className={`${AUTH_FIELD} pl-10 pr-10`}
               {...register("password")}
             />
             <button
               type="button"
               onClick={() => setShowPw((v) => !v)}
-              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
               aria-label="Toggle password"
             >
               {showPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -159,36 +143,14 @@ function SignupForm() {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="confirmPassword" className="font-semibold">
+          <Label htmlFor="confirmPassword" className={AUTH_LABEL}>
             Confirm password
           </Label>
-          <Input id="confirmPassword" type={showPw ? "text" : "password"} autoComplete="new-password" placeholder="Repeat password" className="h-11 rounded-full" {...register("confirmPassword")} />
+          <Input id="confirmPassword" type={showPw ? "text" : "password"} autoComplete="new-password" placeholder="Repeat password" className={AUTH_FIELD} {...register("confirmPassword")} />
           {errors.confirmPassword && <p className="text-xs text-destructive font-medium">{errors.confirmPassword.message}</p>}
         </div>
 
-        <div className="space-y-2">
-          <Label className="font-semibold">I am a…</Label>
-          <div className="grid grid-cols-2 gap-2">
-            {roles.map((r) => {
-              const active = role === r.value;
-              return (
-                <button
-                  key={r.value}
-                  type="button"
-                  onClick={() => setValue("role", r.value, { shouldValidate: true })}
-                  className={`text-left rounded-2xl border-2 p-3 transition-all ${
-                    active ? "border-primary bg-primary/5 shadow-[var(--shadow-soft)]" : "border-border hover:border-primary/40"
-                  }`}
-                >
-                  <div className="font-bold text-sm">{r.label}</div>
-                  <div className="text-xs text-muted-foreground">{r.desc}</div>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        <Button type="submit" disabled={isSubmitting} size="lg" className="w-full rounded-full font-bold shadow-[var(--shadow-soft)]">
+        <Button type="submit" disabled={isSubmitting} size="lg" className={AUTH_SUBMIT}>
           {isSubmitting ? (
             <>
               <Loader2 className="h-4 w-4 animate-spin" /> Creating account…

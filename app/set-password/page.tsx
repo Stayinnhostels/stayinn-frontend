@@ -27,8 +27,8 @@ const schema = z
   });
 type FormValues = z.infer<typeof schema>;
 
-function ResetPasswordForm() {
-  const { resetPassword } = useAuth();
+function SetPasswordForm() {
+  const { completePasswordSetup } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get("token")?.trim() ?? "";
@@ -45,16 +45,16 @@ function ResetPasswordForm() {
   if (!token || !/^[a-f0-9]{64}$/i.test(token)) {
     return (
       <AuthLayout
-        title="Invalid reset link"
-        subtitle="Use the link from your email, or request a new one."
+        title="Invalid invite link"
+        subtitle="Use the link from your booking email. If it expired, contact the hostel and ask them to send a new one."
         footer={
-          <Link href="/forgot-password" className="font-bold text-primary hover:underline">
-            Request new link
+          <Link href="/login" className="font-bold text-primary hover:underline">
+            Back to sign in
           </Link>
         }
       >
         <Button asChild className="w-full rounded-full font-bold h-11">
-          <Link href="/forgot-password">Forgot password</Link>
+          <Link href="/contact">Contact us</Link>
         </Button>
       </AuthLayout>
     );
@@ -66,28 +66,28 @@ function ResetPasswordForm() {
       return;
     }
     try {
-      await resetPassword(token, password);
-      toast.success("Password updated!");
-      router.push("/login");
+      await completePasswordSetup(token, password);
+      toast.success("Password created — you are signed in");
+      router.replace("/account/bookings");
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Could not reset password");
+      toast.error(e instanceof Error ? e.message : "Could not create password");
     }
   };
 
   return (
     <AuthLayout
-      title="Set a new password"
-      subtitle="Choose a strong password you don't use elsewhere."
+      title="Create your password"
+      subtitle="Set a password to track your stay, payments, and booking details on the website."
       footer={
         <Link href="/login" className="font-bold text-primary hover:underline">
-          Back to sign in
+          Already have a password? Sign in
         </Link>
       }
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
         <div className="space-y-2">
           <Label htmlFor="password" className={AUTH_LABEL}>
-            New password
+            Password
           </Label>
           <div className="relative">
             <Lock className={AUTH_ICON} />
@@ -96,6 +96,7 @@ function ResetPasswordForm() {
               type={showPw ? "text" : "password"}
               placeholder="At least 8 characters"
               className={`${AUTH_FIELD} pl-10 pr-10`}
+              autoComplete="new-password"
               {...register("password")}
             />
             <button
@@ -120,6 +121,7 @@ function ResetPasswordForm() {
             type={showPw ? "text" : "password"}
             placeholder="Repeat password"
             className={AUTH_FIELD}
+            autoComplete="new-password"
             {...register("confirmPassword")}
           />
           {errors.confirmPassword && (
@@ -129,16 +131,16 @@ function ResetPasswordForm() {
 
         <div className="flex items-start gap-2 rounded-2xl border border-border/60 bg-muted/40 p-3.5 text-xs text-muted-foreground">
           <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-          Use a mix of upper &amp; lower case letters, numbers, and a symbol for the strongest result.
+          After you create this password you will be signed in automatically and can track your stay.
         </div>
 
         <Button type="submit" disabled={isSubmitting} size="lg" className={AUTH_SUBMIT}>
           {isSubmitting ? (
             <>
-              <Loader2 className="h-4 w-4 animate-spin" /> Updating…
+              <Loader2 className="h-4 w-4 animate-spin" /> Creating…
             </>
           ) : (
-            "Reset password"
+            "Create password and continue"
           )}
         </Button>
       </form>
@@ -146,7 +148,7 @@ function ResetPasswordForm() {
   );
 }
 
-export default function ResetPasswordPage() {
+export default function SetPasswordPage() {
   return (
     <Suspense
       fallback={
@@ -155,7 +157,7 @@ export default function ResetPasswordPage() {
         </div>
       }
     >
-      <ResetPasswordForm />
+      <SetPasswordForm />
     </Suspense>
   );
 }

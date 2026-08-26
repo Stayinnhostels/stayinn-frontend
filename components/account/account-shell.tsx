@@ -3,48 +3,89 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, type ReactNode } from "react";
-import { Calendar, CreditCard, LayoutDashboard, Loader2, UserRound } from "lucide-react";
+import {
+  Calendar,
+  CreditCard,
+  Files,
+  Globe,
+  LayoutDashboard,
+  Loader2,
+  UserRound,
+} from "lucide-react";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useAuth } from "@/lib/auth-context";
 import { loginHref } from "@/lib/auth-redirect";
 import { cn } from "@/lib/utils";
 
-const NAV = [
-  { href: "/account", label: "Overview", icon: LayoutDashboard, exact: true },
+const NAV: {
+  href: string;
+  label: string;
+  icon: typeof LayoutDashboard;
+  exact?: boolean;
+}[] = [
+  { href: "/account", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { href: "/account/bookings", label: "Bookings", icon: Calendar },
   { href: "/account/payments", label: "Payments", icon: CreditCard },
+  { href: "/account/documents", label: "Documents", icon: Files },
   { href: "/account/profile", label: "Profile", icon: UserRound },
-] as const;
+];
 
-function AccountNav() {
+function isActive(pathname: string, href: string, exact?: boolean) {
+  return exact ? pathname === href : pathname === href || pathname.startsWith(`${href}/`);
+}
+
+function MiniSidebar() {
   const pathname = usePathname();
+
   return (
-    <div className="border-b border-border/60 bg-background/80">
-      <nav className="container mx-auto flex gap-1 overflow-x-auto px-4 py-3">
+    <TooltipProvider delayDuration={150}>
+      <aside className="sticky top-20 z-20 flex h-[calc(100vh-6rem)] w-14 shrink-0 flex-col items-center gap-1 rounded-2xl border border-border/70 bg-card py-3 shadow-sm sm:w-16">
         {NAV.map((item) => {
-          const active = item.exact
-            ? pathname === item.href
-            : pathname === item.href || pathname.startsWith(`${item.href}/`);
+          const active = isActive(pathname, item.href, item.exact);
           const Icon = item.icon;
           return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                "inline-flex shrink-0 items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition-colors",
-                active
-                  ? "bg-primary text-primary-foreground shadow-[var(--shadow-soft)]"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground",
-              )}
-            >
-              <Icon className="h-4 w-4" />
-              {item.label}
-            </Link>
+            <Tooltip key={item.href}>
+              <TooltipTrigger asChild>
+                <Link
+                  href={item.href}
+                  aria-label={item.label}
+                  className={cn(
+                    "flex h-10 w-10 items-center justify-center rounded-xl transition-colors sm:h-11 sm:w-11",
+                    active
+                      ? "bg-primary text-primary-foreground shadow-[var(--shadow-soft)]"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                  )}
+                >
+                  <Icon className="h-4 w-4 sm:h-[1.125rem] sm:w-[1.125rem]" />
+                </Link>
+              </TooltipTrigger>
+              <TooltipContent side="right" className="font-semibold">
+                {item.label}
+              </TooltipContent>
+            </Tooltip>
           );
         })}
-      </nav>
-    </div>
+
+        <div className="mt-auto flex flex-col items-center gap-1 border-t border-border/60 pt-2">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Link
+                href="/"
+                aria-label="Back to website"
+                className="flex h-10 w-10 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary sm:h-11 sm:w-11"
+              >
+                <Globe className="h-4 w-4 sm:h-[1.125rem] sm:w-[1.125rem]" />
+              </Link>
+            </TooltipTrigger>
+            <TooltipContent side="right" className="font-semibold">
+              Back to website
+            </TooltipContent>
+          </Tooltip>
+        </div>
+      </aside>
+    </TooltipProvider>
   );
 }
 
@@ -69,8 +110,10 @@ export function AccountShell({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <SiteHeader />
-      <AccountNav />
-      <main className="flex-1">{children}</main>
+      <div className="flex flex-1 gap-3 px-3 py-6 sm:gap-5 sm:px-5 sm:py-8 lg:px-8">
+        <MiniSidebar />
+        <main className="min-w-0 flex-1 pb-10">{children}</main>
+      </div>
       <SiteFooter />
     </div>
   );
