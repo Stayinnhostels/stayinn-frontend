@@ -1,12 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Loader2, Plus, RefreshCw, XCircle } from "lucide-react";
+import { CalendarPlus, Loader2, Plus, RefreshCw, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -15,6 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -32,6 +32,7 @@ import {
   type GuestBookingRequest,
   type GuestBookingRequestType,
 } from "@/lib/guest-api";
+import { formatStayDate } from "@/lib/guest-format";
 import { fetchRooms, formatMarketingRoomTitle, isRoomListedOnSite } from "@/lib/rooms-api";
 import { cn } from "@/lib/utils";
 
@@ -44,6 +45,19 @@ const STATUS_CLASS: Record<string, string> = {
   withdrawn: "bg-muted text-muted-foreground border-border",
 };
 
+function dateKey(value: string | null | undefined) {
+  return String(value ?? "").slice(0, 10);
+}
+
+function addOneDay(isoDate: string) {
+  const [y, m, d] = isoDate.split("-").map(Number);
+  const next = new Date(y, m - 1, d + 1);
+  const yy = next.getFullYear();
+  const mm = String(next.getMonth() + 1).padStart(2, "0");
+  const dd = String(next.getDate()).padStart(2, "0");
+  return `${yy}-${mm}-${dd}`;
+}
+
 export function BookingActionsPanel({ booking }: { booking: GuestBooking }) {
   const queryClient = useQueryClient();
   const canRequest = REQUESTABLE.has(booking.status);
@@ -51,6 +65,9 @@ export function BookingActionsPanel({ booking }: { booking: GuestBooking }) {
   const [reason, setReason] = useState("");
   const [roomId, setRoomId] = useState("");
   const [extraSeats, setExtraSeats] = useState("1");
+  const currentCheckOut = dateKey(booking.check_out);
+  const minExtendDate = currentCheckOut ? addOneDay(currentCheckOut) : "";
+  const [checkOut, setCheckOut] = useState(minExtendDate);
 
   const { data: requests = [], isLoading } = useQuery({
     queryKey: ["guest-booking-requests", booking.id],
@@ -78,11 +95,15 @@ export function BookingActionsPanel({ booking }: { booking: GuestBooking }) {
       if (openAction === "room_change" && !roomId) {
         throw new Error("Select a room");
       }
+      if (openAction === "extend_stay" && !checkOut) {
+        throw new Error("Choose a new checkout date");
+      }
       return createMyBookingRequest(booking.id, {
         type: openAction,
         reason: reason.trim() || undefined,
         requested_room_id: openAction === "room_change" ? roomId : undefined,
         additional_seats: openAction === "additional_seat" ? Number(extraSeats) : undefined,
+        requested_check_out: openAction === "extend_stay" ? checkOut : undefined,
       });
     },
     onSuccess: () => {
@@ -107,6 +128,7 @@ export function BookingActionsPanel({ booking }: { booking: GuestBooking }) {
     setReason("");
     setRoomId("");
     setExtraSeats("1");
+    setCheckOut(minExtendDate);
   };
 
   const dialogTitle =
@@ -114,62 +136,62 @@ export function BookingActionsPanel({ booking }: { booking: GuestBooking }) {
       ? "Request cancellation"
       : openAction === "room_change"
         ? "Request room change"
-        : "Request additional seat";
+        : openAction === "extend_stay"
+          ? "Request stay extension"
+          : "Request additional seat";
 
   return (
     <section className="mt-8">
       <div className="mb-4">
-        <h2 className="text-xl font-extrabold tracking-tight">Booking actions</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Send a request to the property team. Changes apply only after they approve.
+        <h2 className="text-lg font-semibold tracking-tight">Requests</h2>
+        <p className="mt-0.5 text-sm text-muted-foreground">
+          Changes apply only after the hostel approves.
         </p>
       </div>
 
       {canRequest ? (
-        <div className="grid gap-3 sm:grid-cols-3">
-          <ActionCard
-            icon={<XCircle className="h-5 w-5" />}
-            title="Cancel booking"
-            description="Ask to cancel this reservation."
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <ActionButton
+            icon={<XCircle className="h-4 w-4" />}
+            title="Cancel"
             disabled={pendingByType.has("cancel") || createMutation.isPending}
             onClick={() => setOpenAction("cancel")}
-            tone="rose"
           />
-          <ActionCard
-            icon={<RefreshCw className="h-5 w-5" />}
+          <ActionButton
+            icon={<RefreshCw className="h-4 w-4" />}
             title="Change room"
-            description="Request a move to another room."
             disabled={pendingByType.has("room_change") || createMutation.isPending}
             onClick={() => setOpenAction("room_change")}
-            tone="sky"
           />
-          <ActionCard
-            icon={<Plus className="h-5 w-5" />}
+          <ActionButton
+            icon={<Plus className="h-4 w-4" />}
             title="Add seat"
-            description="Request one or more extra seats."
             disabled={pendingByType.has("additional_seat") || createMutation.isPending}
             onClick={() => setOpenAction("additional_seat")}
-            tone="violet"
+          />
+          <ActionButton
+            icon={<CalendarPlus className="h-4 w-4" />}
+            title="Extend stay"
+            disabled={pendingByType.has("extend_stay") || createMutation.isPending || !minExtendDate}
+            onClick={() => {
+              setCheckOut(minExtendDate);
+              setOpenAction("extend_stay");
+            }}
           />
         </div>
       ) : (
-        <Card className="rounded-2xl border-dashed">
-          <CardContent className="p-5 text-sm text-muted-foreground">
-            Booking actions are only available while the stay is pending, confirmed, or checked in.
-          </CardContent>
-        </Card>
+        <div className="rounded-3xl border border-dashed border-border/80 bg-card px-5 py-6 text-sm text-muted-foreground">
+          Requests are only available while the stay is pending, confirmed, or checked in.
+        </div>
       )}
 
-      <div className="mt-6">
-        <h3 className="text-sm font-bold uppercase tracking-wide text-muted-foreground">
-          Your requests
-        </h3>
+      <div className="mt-5">
         {isLoading ? (
-          <p className="mt-3 text-sm text-muted-foreground">Loading requests…</p>
+          <p className="text-sm text-muted-foreground">Loading requests…</p>
         ) : requests.length === 0 ? (
-          <p className="mt-3 text-sm text-muted-foreground">No requests yet for this booking.</p>
+          <p className="text-sm text-muted-foreground">No requests yet.</p>
         ) : (
-          <ul className="mt-3 space-y-2">
+          <ul className="space-y-2">
             {requests.map((request) => (
               <RequestRow
                 key={request.id}
@@ -228,6 +250,23 @@ export function BookingActionsPanel({ booking }: { booking: GuestBooking }) {
               </div>
             ) : null}
 
+            {openAction === "extend_stay" ? (
+              <div className="space-y-2">
+                <Label htmlFor="extend-checkout">New checkout date</Label>
+                <Input
+                  id="extend-checkout"
+                  type="date"
+                  min={minExtendDate}
+                  value={checkOut}
+                  onChange={(e) => setCheckOut(e.target.value)}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Current checkout: {formatStayDate(booking.check_out)}. Pick a later date — the team
+                  must approve before your stay is extended.
+                </p>
+              </div>
+            ) : null}
+
             <div className="space-y-2">
               <Label htmlFor="request-reason">Note (optional)</Label>
               <Textarea
@@ -256,50 +295,28 @@ export function BookingActionsPanel({ booking }: { booking: GuestBooking }) {
   );
 }
 
-function ActionCard({
+function ActionButton({
   icon,
   title,
-  description,
   onClick,
   disabled,
-  tone,
 }: {
-  icon: React.ReactNode;
+  icon: ReactNode;
   title: string;
-  description: string;
   onClick: () => void;
   disabled?: boolean;
-  tone: "rose" | "sky" | "violet";
 }) {
-  const toneClass = {
-    rose: "border-rose-500/20 hover:border-rose-500/40 hover:bg-rose-500/[0.04]",
-    sky: "border-sky-500/20 hover:border-sky-500/40 hover:bg-sky-500/[0.04]",
-    violet: "border-violet-500/20 hover:border-violet-500/40 hover:bg-violet-500/[0.04]",
-  }[tone];
-  const iconClass = {
-    rose: "bg-rose-500/15 text-rose-700",
-    sky: "bg-sky-500/15 text-sky-700",
-    violet: "bg-violet-500/15 text-violet-700",
-  }[tone];
-
   return (
     <button
       type="button"
       disabled={disabled}
       onClick={onClick}
-      className={cn(
-        "rounded-2xl border bg-card p-4 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-50",
-        toneClass,
-      )}
+      className="flex items-center gap-3 rounded-3xl border border-border/60 bg-card p-4 text-left shadow-[var(--shadow-card)] transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/20 hover:shadow-[var(--shadow-soft)] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
     >
-      <div className={cn("mb-3 flex h-10 w-10 items-center justify-center rounded-xl", iconClass)}>
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
         {icon}
       </div>
-      <p className="font-extrabold">{title}</p>
-      <p className="mt-1 text-sm text-muted-foreground">{description}</p>
-      {disabled ? (
-        <p className="mt-2 text-xs font-semibold text-amber-700">Pending request already open</p>
-      ) : null}
+      <span className="font-medium">{title}</span>
     </button>
   );
 }
@@ -313,35 +330,37 @@ function RequestRow({
   onWithdraw: () => void;
   withdrawing: boolean;
 }) {
+  const detail =
+    request.type === "room_change" && request.payload.requested_room_title
+      ? `Preferred: ${request.payload.requested_room_title}`
+      : request.type === "additional_seat" && request.payload.additional_seats
+        ? `Add ${request.payload.additional_seats} seat(s)`
+        : request.type === "extend_stay" && request.payload.requested_check_out
+          ? `New checkout: ${formatStayDate(request.payload.requested_check_out)}${
+              request.payload.target_months
+                ? ` · ${request.payload.current_months ?? "?"} → ${request.payload.target_months} months`
+                : request.payload.target_nights
+                  ? ` · ${request.payload.current_nights ?? "?"} → ${request.payload.target_nights} nights`
+                  : ""
+            }`
+          : request.reason || "No note provided";
+
   return (
-    <li className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border/70 bg-card px-4 py-3">
+    <li className="flex flex-wrap items-center justify-between gap-3 rounded-3xl border border-border/60 bg-card px-4 py-3.5 shadow-[var(--shadow-card)]">
       <div className="min-w-0">
         <div className="flex flex-wrap items-center gap-2">
-          <p className="font-bold">{request.type_label}</p>
+          <p className="text-sm font-medium">{request.type_label}</p>
           <Badge variant="outline" className={cn("rounded-full capitalize", STATUS_CLASS[request.status])}>
             {request.status}
           </Badge>
         </div>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {request.type === "room_change" && request.payload.requested_room_title
-            ? `Preferred: ${request.payload.requested_room_title}`
-            : request.type === "additional_seat" && request.payload.additional_seats
-              ? `Add ${request.payload.additional_seats} seat(s)`
-              : request.reason || "No note provided"}
-        </p>
+        <p className="mt-0.5 text-sm text-muted-foreground">{detail}</p>
         {request.admin_note ? (
-          <p className="mt-1 text-xs text-muted-foreground">Staff note: {request.admin_note}</p>
+          <p className="mt-1 text-sm text-muted-foreground">Staff note: {request.admin_note}</p>
         ) : null}
       </div>
       {request.status === "pending" ? (
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          className="rounded-full font-bold"
-          disabled={withdrawing}
-          onClick={onWithdraw}
-        >
+        <Button type="button" variant="ghost" size="sm" disabled={withdrawing} onClick={onWithdraw}>
           {withdrawing ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
           Withdraw
         </Button>

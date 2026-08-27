@@ -8,6 +8,7 @@ import {
   CreditCard,
   Files,
   Globe,
+  Headphones,
   LayoutDashboard,
   Loader2,
   UserRound,
@@ -29,6 +30,7 @@ const NAV: {
   { href: "/account/bookings", label: "Bookings", icon: Calendar },
   { href: "/account/payments", label: "Payments", icon: CreditCard },
   { href: "/account/documents", label: "Documents", icon: Files },
+  { href: "/account/support", label: "Support", icon: Headphones },
   { href: "/account/profile", label: "Profile", icon: UserRound },
 ];
 
@@ -41,7 +43,7 @@ function MiniSidebar() {
 
   return (
     <TooltipProvider delayDuration={150}>
-      <aside className="sticky top-20 z-20 flex h-[calc(100vh-6rem)] w-14 shrink-0 flex-col items-center gap-1 rounded-2xl border border-border/70 bg-card py-3 shadow-sm sm:w-16">
+      <aside className="sticky top-28 z-20 flex h-[calc(100vh-8rem)] w-14 shrink-0 flex-col items-center gap-1 self-start rounded-2xl border border-border/70 bg-card py-3 shadow-sm sm:w-16">
         {NAV.map((item) => {
           const active = isActive(pathname, item.href, item.exact);
           const Icon = item.icon;
@@ -101,18 +103,18 @@ export function AccountShell({ children }: { children: ReactNode }) {
 
   if (loading || !user) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
+      <div className="flex min-h-screen items-center justify-center bg-white">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     );
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-background">
+    <div className="flex min-h-screen flex-col bg-white">
       <SiteHeader />
       <div className="flex flex-1 gap-3 px-3 py-6 sm:gap-5 sm:px-5 sm:py-8 lg:px-8">
         <MiniSidebar />
-        <main className="min-w-0 flex-1 pb-10">{children}</main>
+        <main className="min-w-0 flex-1 px-1 pb-16 pt-1 sm:px-2 sm:pt-2">{children}</main>
       </div>
       <SiteFooter />
     </div>

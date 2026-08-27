@@ -5,10 +5,27 @@ import { filenameFromContentDisposition, triggerBrowserDownload } from "@/lib/do
 
 export type GuestBookingStatus = "pending" | "confirmed" | "checked_in" | "checked_out" | "cancelled";
 
+export type GuestExtraLedgerEntry = {
+  month: string;
+  amount: number;
+  payment_status: string;
+};
+
 export type GuestRentLedgerEntry = {
   month: string;
   rent_amount: number | null;
   payment_status: string;
+};
+
+export type GuestResidentExtra = {
+  id: string;
+  label: string;
+  amount: number;
+  billing_cycle: "monthly" | "one_time";
+  start_month: string | null;
+  end_month: string | null;
+  status: "active" | "ended";
+  ledger?: GuestExtraLedgerEntry[];
 };
 
 export type GuestSecurityLedgerEntry = {
@@ -36,6 +53,7 @@ export type GuestBooking = {
   months_paid_upfront?: number | null;
   amount_paid_upfront?: number;
   amount_outstanding?: number;
+  extras_outstanding?: number;
   security_status?: string;
   security_amount?: number | null;
   security_returned?: number | null;
@@ -54,6 +72,7 @@ export type GuestBooking = {
   amount_refunded?: number | null;
   amount_retained?: number | null;
   rent_ledger?: GuestRentLedgerEntry[];
+  resident_extras?: GuestResidentExtra[];
   created_at: string | null;
   updated_at: string | null;
 };
@@ -127,20 +146,14 @@ async function downloadGuestPdf(path: string, fallbackFilename: string) {
 }
 
 export async function downloadMyCurrentMonthReceipt(bookingId: string, month: string) {
+  const qs = month ? `?month=${encodeURIComponent(month)}` : "";
   return downloadGuestPdf(
-    `/api/v1/me/bookings/${bookingId}/receipt`,
-    `rent-receipt-${month}.pdf`,
+    `/api/v1/me/bookings/${bookingId}/receipt${qs}`,
+    `rent-receipt-${month || "current"}.pdf`,
   );
 }
 
-export async function downloadMyBookingInvoice(bookingId: string) {
-  return downloadGuestPdf(
-    `/api/v1/me/bookings/${bookingId}/invoice`,
-    `booking-invoice-${bookingRef(bookingId)}.pdf`,
-  );
-}
-
-export type GuestBookingRequestType = "cancel" | "room_change" | "additional_seat";
+export type GuestBookingRequestType = "cancel" | "room_change" | "additional_seat" | "extend_stay";
 export type GuestBookingRequestStatus = "pending" | "approved" | "rejected" | "withdrawn";
 
 export type GuestBookingRequest = {
@@ -156,6 +169,13 @@ export type GuestBookingRequest = {
     additional_seats?: number;
     current_seats?: number;
     target_seats?: number;
+    requested_check_out?: string;
+    current_check_out?: string;
+    current_months?: number;
+    target_months?: number;
+    current_nights?: number;
+    target_nights?: number;
+    stay_unit?: "month" | "night";
   };
   admin_note: string;
   amount_refunded: number | null;
@@ -182,6 +202,7 @@ export async function createMyBookingRequest(
     reason?: string;
     requested_room_id?: string;
     additional_seats?: number;
+    requested_check_out?: string;
   },
 ) {
   const token = requireToken();

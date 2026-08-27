@@ -5,9 +5,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { AccountCard, AccountPage, AccountPageHeader } from "@/components/account/account-page";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/lib/auth-context";
@@ -40,37 +39,38 @@ export default function AccountProfilePage() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-10 pb-20">
-      <Badge variant="outline" className="mb-3 rounded-full border-primary/30 font-bold text-primary">
-        PROFILE
-      </Badge>
-      <h1 className="text-4xl font-extrabold tracking-tight">Your details</h1>
-      <p className="mt-2 text-muted-foreground">This is the name on your Stay Inn account.</p>
+    <AccountPage>
+      <AccountPageHeader
+        title="Profile"
+        description="This is the name on your Stay Inn account."
+      />
 
-      <Card className="mt-8 max-w-xl rounded-3xl border-2 p-6">
-        <CardContent className="p-0">
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-            <div>
-              <Label htmlFor="fullName" className="mb-2 block font-bold">
-                Full name
-              </Label>
-              <Input id="fullName" maxLength={120} {...register("fullName")} />
-              {errors.fullName ? (
-                <p className="mt-1 text-sm font-medium text-destructive">{errors.fullName.message}</p>
-              ) : null}
-            </div>
-            <div>
-              <Label className="mb-2 block font-bold">Email</Label>
-              <Input value={user?.email ?? ""} disabled />
-              <p className="mt-1 text-xs text-muted-foreground">Email is used to sign in and cannot be changed here.</p>
-            </div>
-            <Button type="submit" disabled={isSubmitting || !isDirty} className="rounded-full font-bold">
-              {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-              Save changes
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
-    </div>
+      <AccountCard className="max-w-lg">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+          <div>
+            <Label htmlFor="fullName" className="mb-2 block text-sm">
+              Full name
+            </Label>
+            <Input id="fullName" maxLength={120} {...register("fullName")} />
+            {errors.fullName ? (
+              <p className="mt-1 text-sm text-destructive">{errors.fullName.message}</p>
+            ) : null}
+          </div>
+          <div>
+            <Label htmlFor="email" className="mb-2 block text-sm">
+              Email
+            </Label>
+            <Input id="email" value={user?.email ?? ""} disabled />
+            <p className="mt-1.5 text-sm text-muted-foreground">
+              Used to sign in. Contact the hostel if you need to change it.
+            </p>
+          </div>
+          <Button type="submit" className="rounded-full" disabled={isSubmitting || !isDirty}>
+            {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+            Save changes
+          </Button>
+        </form>
+      </AccountCard>
+    </AccountPage>
   );
 }

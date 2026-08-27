@@ -18,6 +18,8 @@ export type SiteSettings = {
   country: string;
   whatsapp: string | null;
   whatsapp_url: string | null;
+  emergencyPhone: string;
+  emergencyLabel: string;
   fullAddress: string;
   mapUrl: string;
   primaryColor: string;
@@ -47,6 +49,8 @@ export const SITE_SETTINGS_DEFAULTS: SiteSettings = {
   country: "Pakistan",
   whatsapp: "923310008196",
   whatsapp_url: "https://wa.me/923310008196",
+  emergencyPhone: "",
+  emergencyLabel: "Emergency / front desk",
   fullAddress: "Lahore, Punjab, Pakistan",
   mapUrl: "",
   primaryColor: DEFAULT_PRIMARY_COLOR,

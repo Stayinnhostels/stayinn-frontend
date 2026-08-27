@@ -57,8 +57,16 @@ function SiteHeaderInner() {
     `${pathname}${searchParams.toString() ? `?${searchParams.toString()}` : ""}`,
   );
 
+  const onAccount = pathname.startsWith("/account");
+
   return (
-    <header className="sticky top-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-xl">
+    <header
+      className={
+        onAccount
+          ? "sticky top-0 z-50 border-b border-border/50 bg-white"
+          : "sticky top-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-xl"
+      }
+    >
       <div className={`container mx-auto ${NAV_BAR_CLASS}`}>
         <Link href="/" className="flex shrink-0 items-center">
           <BrandNavLogo alt={hotelName} />
