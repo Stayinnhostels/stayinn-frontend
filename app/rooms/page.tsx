@@ -1,14 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Users, Check } from "lucide-react";
+import { Calendar, Users, Check } from "lucide-react";
 import { useCurrency } from "@/components/currency-provider";
 import { useSiteSettings } from "@/components/site-settings-provider";
 import { RoomsFiltersSidebar } from "@/components/rooms-filters-sidebar";
@@ -21,11 +22,22 @@ import {
   formatSeatsFree,
   type MarketingRoom,
 } from "@/lib/rooms-api";
+import { buildStaySearchQuery, formatStayRange, parseStaySearch } from "@/lib/stay-dates";
 
 const CAPACITY_OPTIONS = [1, 2, 3, 4] as const;
 const RESULTS_SCROLL_OFFSET = 88;
 
 export default function RoomsPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-background" />}>
+      <RoomsPageContent />
+    </Suspense>
+  );
+}
+
+function RoomsPageContent() {
+  const searchParams = useSearchParams();
+  const staySearch = useMemo(() => parseStaySearch(searchParams), [searchParams]);
   const { roomsFilterMinPrice, roomsFilterMaxPrice } = useSiteSettings();
   const settingsBounds = useMemo(
     () => normalizeRoomsFilterBounds(roomsFilterMinPrice, roomsFilterMaxPrice),
@@ -95,9 +107,10 @@ export default function RoomsPage() {
           r.price <= price[1] &&
           (types.length === 0 || types.includes(r.type)) &&
           (capacity.length === 0 || capacity.includes(r.capacity)) &&
-          (amenities.length === 0 || amenities.every((a) => r.amenities.includes(a))),
+          (amenities.length === 0 || amenities.every((a) => r.amenities.includes(a))) &&
+          (!staySearch || (r.beds_available >= staySearch.seats && r.capacity >= staySearch.seats)),
       ),
-    [rooms, price, types, capacity, amenities],
+    [rooms, price, types, capacity, amenities, staySearch],
   );
 
   const activeFilterCount = useMemo(() => {
@@ -136,6 +149,25 @@ export default function RoomsPage() {
         <p className="mt-3 max-w-xl text-muted-foreground">
           Filter rooms and book one or more seats.
         </p>
+        {staySearch ? (
+          <div className="mt-5 inline-flex flex-wrap items-center gap-3 rounded-2xl border border-primary/25 bg-primary/5 px-4 py-3 text-sm">
+            <Calendar className="h-4 w-4 text-primary" />
+            <span>
+              <span className="font-semibold text-foreground">
+                {formatStayRange(staySearch.checkIn, staySearch.checkOut)}
+              </span>
+              <span className="text-muted-foreground">
+                {" "}
+                ·{" "}
+                <Users className="mr-0.5 inline h-3.5 w-3.5" />
+                {staySearch.seats} {staySearch.seats === 1 ? "seat" : "seats"}
+              </span>
+            </span>
+            <Link href="/" className="font-semibold text-primary hover:underline">
+              Change dates
+            </Link>
+          </div>
+        ) : null}
       </section>
 
       <section className="container mx-auto grid gap-8 px-4 pb-20 lg:grid-cols-[300px_1fr] xl:grid-cols-[320px_1fr]">
@@ -181,12 +213,18 @@ export default function RoomsPage() {
           ) : filtered.length === 0 ? (
             <div className="rounded-3xl border-2 border-dashed p-16 text-center">
               <p className="mb-2 font-bold">
-                {rooms.length === 0 ? "No seats available right now" : "No rooms match these filters"}
+                {rooms.length === 0
+                  ? "No seats available right now"
+                  : staySearch
+                    ? "No rooms available for these dates"
+                    : "No rooms match these filters"}
               </p>
               <p className="mb-5 text-sm text-muted-foreground">
                 {rooms.length === 0
                   ? "All rooms are fully booked. Check back later when seats open up."
-                  : "Try widening your price range or removing some filters."}
+                  : staySearch
+                    ? "Try different dates, fewer seats, or remove sidebar filters."
+                    : "Try widening your price range or removing some filters."}
               </p>
               <Button onClick={reset} className="rounded-full font-bold">
                 Reset filters
@@ -244,7 +282,15 @@ export default function RoomsPage() {
                         <Link href={`/room/${r.id}`}>Details</Link>
                       </Button>
                       <Button asChild className="rounded-full font-bold">
-                        <Link href={`/booking?roomId=${encodeURIComponent(r.id)}`}>Book</Link>
+                        <Link
+                          href={
+                            staySearch
+                              ? `/booking?roomId=${encodeURIComponent(r.id)}&${buildStaySearchQuery(staySearch)}`
+                              : `/booking?roomId=${encodeURIComponent(r.id)}`
+                          }
+                        >
+                          Book
+                        </Link>
                       </Button>
                     </div>
                   </CardContent>

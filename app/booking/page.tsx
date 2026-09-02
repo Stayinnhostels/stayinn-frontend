@@ -36,21 +36,9 @@ import { validateCouponApi, type ValidateCouponResult } from "@/lib/coupons-api"
 import { formatPhoneForDisplay, resolvePropertyContact } from "@/lib/property-contact";
 import { securityDepositForSeats, securityPerSeat } from "@/lib/security-deposit";
 import { resolveMapOpenUrl } from "@/lib/map-embed";
+import { clampMoveInDate, nightsBetween, parseStaySearch, todayIsoDate } from "@/lib/stay-dates";
 
 const NIGHT_PRESETS = [1, 2, 3, 4, 5, 6, 7, 10, 14, 21, 30];
-
-function todayIsoDate() {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-}
-
-/** Keep only today or a future local calendar day. */
-function clampMoveInDate(value: string) {
-  const today = todayIsoDate();
-  const key = value.slice(0, 10);
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(key) || key < today) return today;
-  return key;
-}
 
 function nightOptions(minStay: number, maxStay: number) {
   const inRange = NIGHT_PRESETS.filter((n) => n >= minStay && n <= maxStay);
@@ -189,6 +177,7 @@ function BookingForm() {
   const { currency, formatPrice, ready } = useCurrency();
   const searchParams = useSearchParams();
   const roomIdFromQuery = searchParams.get("roomId") ?? undefined;
+  const stayFromQuery = useMemo(() => parseStaySearch(searchParams), [searchParams]);
 
   const [rooms, setRooms] = useState<MarketingRoom[]>([]);
   const [loadingRooms, setLoadingRooms] = useState(true);
@@ -245,6 +234,23 @@ function BookingForm() {
       }
     })();
   }, [roomIdFromQuery, currency, ready]);
+
+  useEffect(() => {
+    if (!stayFromQuery) return;
+    setMoveIn(stayFromQuery.checkIn);
+    setSeats(stayFromQuery.seats);
+    const nights = nightsBetween(stayFromQuery.checkIn, stayFromQuery.checkOut);
+    if (nights < 1) return;
+    if (nights <= maxStay) {
+      setStayUnit("night");
+      setNights(Math.min(Math.max(nights, minStay), maxStay));
+    } else {
+      setStayUnit("month");
+      const monthsCount = Math.max(1, Math.ceil(nights / 30));
+      setMonths(monthsCount);
+      setMonthsToPay(Math.min(monthsCount, 1));
+    }
+  }, [stayFromQuery, minStay, maxStay]);
 
   const room = useMemo(() => rooms.find((r) => r.id === selectedId), [rooms, selectedId]);
 

@@ -1,10 +1,9 @@
 "use client";
 
-import Link from "next/link";
-import { ArrowRight, ShieldCheck, Sparkles, Star } from "lucide-react";
+import { ShieldCheck, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { useSiteSettings } from "@/components/site-settings-provider";
+import { HeroAvailabilityBar } from "@/components/hero-availability-bar";
 import { resolveHeroImageSrc } from "@/lib/homepage-hero";
 
 export function HomeHeroSection() {
@@ -15,19 +14,8 @@ export function HomeHeroSection() {
     description,
     heroShowBadge,
     heroBadgeText,
-    heroPrimaryCtaLabel,
-    heroPrimaryCtaHref,
-    heroSecondaryCtaLabel,
-    heroSecondaryCtaHref,
     heroImageUrl,
     heroImageAlt,
-    heroShowStats,
-    heroStat1Value,
-    heroStat1Label,
-    heroStat2Value,
-    heroStat2Label,
-    heroStat3Value,
-    heroStat3Label,
     heroShowTrustBadge,
     heroTrustTitle,
     heroTrustSubtitle,
@@ -36,8 +24,8 @@ export function HomeHeroSection() {
   const heroImageSrc = resolveHeroImageSrc(heroImageUrl);
 
   return (
-    <div className="container mx-auto grid gap-12 px-4 py-16 md:py-24 lg:grid-cols-2 lg:items-center">
-      <div className="space-y-7 animate-fade-in">
+    <div className="mx-auto grid w-full max-w-7xl gap-12 px-3 py-16 sm:px-4 md:py-24 lg:grid-cols-2 lg:items-center lg:px-6 xl:max-w-[88rem]">
+      <div className="min-w-0 space-y-7 animate-fade-in">
         <div className="space-y-7">
           {heroShowBadge && heroBadgeText.trim() ? (
             <Badge className="rounded-full bg-accent text-accent-foreground hover:bg-accent border-0 px-4 py-1.5 text-xs font-bold">
@@ -49,45 +37,9 @@ export function HomeHeroSection() {
             <span className="bg-[image:var(--gradient-hero)] bg-clip-text text-transparent">{tagline}</span>
           </h1>
           <p className="max-w-xl text-lg text-muted-foreground md:text-xl">{description}</p>
-          <div className="flex flex-wrap gap-3">
-            {heroPrimaryCtaLabel.trim() ? (
-              <Button
-                asChild
-                size="lg"
-                className="rounded-full px-7 font-bold shadow-[var(--shadow-glow)] hover:scale-105 transition-transform"
-              >
-                <Link href={heroPrimaryCtaHref || "/booking"}>
-                  {heroPrimaryCtaLabel} <ArrowRight className="ml-1 h-4 w-4" />
-                </Link>
-              </Button>
-            ) : null}
-            {heroSecondaryCtaLabel.trim() ? (
-              <Button asChild size="lg" variant="outline" className="rounded-full px-7 font-bold border-2">
-                <Link href={heroSecondaryCtaHref || "/rooms"}>{heroSecondaryCtaLabel}</Link>
-              </Button>
-            ) : null}
-          </div>
-        </div>
 
-        {heroShowStats ? (
-          <div className="flex items-center gap-6 pt-4">
-            <div>
-              <div className="text-2xl font-extrabold">{heroStat1Value}</div>
-              <div className="text-xs text-muted-foreground">{heroStat1Label}</div>
-            </div>
-            <div className="h-10 w-px bg-border" />
-            <div>
-              <div className="text-2xl font-extrabold">{heroStat2Value}</div>
-              <div className="text-xs text-muted-foreground">{heroStat2Label}</div>
-            </div>
-            <div className="h-10 w-px bg-border" />
-            <div className="flex items-center gap-1">
-              <Star className="h-5 w-5 fill-accent text-accent" />
-              <span className="text-2xl font-extrabold">{heroStat3Value}</span>
-              <span className="text-xs text-muted-foreground">{heroStat3Label}</span>
-            </div>
-          </div>
-        ) : null}
+          <HeroAvailabilityBar />
+        </div>
       </div>
 
       <div className="relative">
@@ -100,7 +52,7 @@ export function HomeHeroSection() {
           className="rounded-[2rem] shadow-[var(--shadow-card)] object-cover aspect-[4/3] w-full"
         />
         {heroShowTrustBadge && (heroTrustTitle.trim() || heroTrustSubtitle.trim()) ? (
-          <div className="absolute -bottom-6 -left-6 rounded-2xl bg-card p-4 shadow-[var(--shadow-card)] hidden sm:block animate-scale-in">
+          <div className="absolute -bottom-5 -right-4 z-40 rounded-2xl bg-card p-4 shadow-[var(--shadow-card)] sm:-right-6 hidden sm:block animate-scale-in">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
                 <ShieldCheck className="h-5 w-5" />

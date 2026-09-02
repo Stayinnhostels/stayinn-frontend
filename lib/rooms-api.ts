@@ -138,7 +138,7 @@ export async function fetchRoomById(
   currency?: DisplayCurrency,
 ): Promise<MarketingRoom | null> {
   try {
-    const q = currency ? `?currency=${currency}` : "";
+    const q = currency ? `?currency=${currency}&bookable=true` : "?bookable=true";
     const data = await apiFetch<GetRoomResponse>(
       `/api/v1/rooms/${encodeURIComponent(id)}${q}`,
     );
