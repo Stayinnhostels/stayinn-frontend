@@ -34,7 +34,7 @@ import { fetchRooms, formatSeatsFree, type MarketingRoom } from "@/lib/rooms-api
 import { createBookingApi, type BookingContact, type BookingResult } from "@/lib/bookings-api";
 import { validateCouponApi, type ValidateCouponResult } from "@/lib/coupons-api";
 import { formatPhoneForDisplay, resolvePropertyContact } from "@/lib/property-contact";
-import { securityDepositForSeats, securityPerSeat } from "@/lib/security-deposit";
+import { securityDepositForSeats } from "@/lib/security-deposit";
 import { resolveMapOpenUrl } from "@/lib/map-embed";
 import { clampMoveInDate, nightsBetween, parseStaySearch, todayIsoDate } from "@/lib/stay-dates";
 
@@ -505,8 +505,8 @@ function BookingForm() {
                   <p className="mt-1.5 text-xs text-muted-foreground">
                     Seat reserved for the full {months}-month stay
                     {months > 1 ? " — choose below how many months of rent to pay now." : "."}{" "}
-                    Refundable security deposit: {formatPrice(securityPerSeat(currency))} per seat (
-                    {formatPrice(securityDeposit)} total) — collected at check-in.
+                    Refundable security deposit: {formatPrice(securityDeposit)} — collected once at
+                    check-in.
                   </p>
                 )}
               </div>
@@ -750,9 +750,7 @@ function BookingForm() {
                   </div>
                   {!isNightStay && securityDeposit > 0 && (
                     <div className="flex justify-between text-muted-foreground">
-                      <span>
-                        Security deposit ({formatPrice(securityPerSeat(currency))} × {seats} seat)
-                      </span>
+                      <span>Security deposit</span>
                       <span className="font-semibold text-foreground">{formatPrice(securityDeposit)}</span>
                     </div>
                   )}

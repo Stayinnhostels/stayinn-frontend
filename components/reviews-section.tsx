@@ -6,11 +6,16 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Loader2, Star } from "lucide-react";
+import { GoogleReviewsEmbed } from "@/components/google-reviews-embed";
 import { SubmitReviewForm } from "@/components/submit-review-form";
 import { fetchRooms, type MarketingRoom } from "@/lib/rooms-api";
 import { fetchPublicReviews, reviewGuestRole, type PublicReview } from "@/lib/reviews-api";
 
+const GOOGLE_REVIEWS_WIDGET_ID =
+  process.env.NEXT_PUBLIC_GOOGLE_REVIEWS_WIDGET_ID?.trim() ?? "";
+
 export function ReviewsSection() {
+  const hasGoogleEmbed = GOOGLE_REVIEWS_WIDGET_ID.length > 0;
   const [reviews, setReviews] = useState<PublicReview[]>([]);
   const [rooms, setRooms] = useState<MarketingRoom[]>([]);
   const [loading, setLoading] = useState(true);
@@ -64,65 +69,87 @@ export function ReviewsSection() {
           </p>
         </div>
 
-        {loading ? (
-          <div className="flex justify-center py-12 text-muted-foreground">
-            <Loader2 className="h-8 w-8 animate-spin" />
+        {hasGoogleEmbed ? (
+          <div className="mb-10">
+            <GoogleReviewsEmbed widgetId={GOOGLE_REVIEWS_WIDGET_ID} />
           </div>
-        ) : loadError ? (
+        ) : null}
+
+        {loading ? (
+          !hasGoogleEmbed ? (
+            <div className="flex justify-center py-12 text-muted-foreground">
+              <Loader2 className="h-8 w-8 animate-spin" />
+            </div>
+          ) : null
+        ) : loadError && !hasGoogleEmbed ? (
           <Card className="mx-auto max-w-lg rounded-3xl border-2 border-dashed p-10 text-center">
             <Star className="mx-auto h-10 w-10 text-muted-foreground/40" />
             <p className="mt-4 font-bold">Could not load reviews</p>
             <p className="mt-1 text-sm text-muted-foreground">Please refresh the page and try again.</p>
           </Card>
-        ) : reviews.length === 0 ? (
+        ) : reviews.length === 0 && !hasGoogleEmbed ? (
           <Card className="mx-auto max-w-lg rounded-3xl border-2 border-dashed p-10 text-center">
             <Star className="mx-auto h-10 w-10 text-muted-foreground/40" />
             <p className="mt-4 font-bold">No reviews yet</p>
             <p className="mt-1 text-sm text-muted-foreground">
-              Be the first to share your experience — we publish reviews after a quick check by our team.
+              Be the first to share your experience — we publish reviews after a quick check by our
+              team.
             </p>
           </Card>
-        ) : (
-          <div className="grid gap-6 md:grid-cols-3">
-            {reviews.map((t) => (
-              <Card
-                key={t.id}
-                className="rounded-3xl p-7 border-2 hover:shadow-[var(--shadow-card)] transition-shadow"
-              >
-                <div className="flex gap-0.5 mb-4">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <Star
-                      key={i}
-                      className={`h-4 w-4 ${i < t.rating ? "fill-accent text-accent" : "text-muted-foreground/30"}`}
-                    />
-                  ))}
-                </div>
-                <p className="text-foreground/90 leading-relaxed mb-6">&quot;{t.comment}&quot;</p>
-                <div className="flex items-center gap-3 pt-4 border-t">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[image:var(--gradient-hero)] text-primary-foreground font-extrabold">
-                    {t.guest_name.charAt(0)}
+        ) : reviews.length > 0 ? (
+          <div className={hasGoogleEmbed ? "mt-4 space-y-4" : undefined}>
+            {hasGoogleEmbed ? (
+              <p className="text-center text-sm font-semibold text-muted-foreground">
+                Reviews from Stay Inn guests
+              </p>
+            ) : null}
+            <div className="grid gap-6 md:grid-cols-3">
+              {reviews.map((t) => (
+                <Card
+                  key={t.id}
+                  className="rounded-3xl p-7 border-2 hover:shadow-[var(--shadow-card)] transition-shadow"
+                >
+                  <div className="flex gap-0.5 mb-4">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <Star
+                        key={i}
+                        className={`h-4 w-4 ${i < t.rating ? "fill-accent text-accent" : "text-muted-foreground/30"}`}
+                      />
+                    ))}
                   </div>
-                  <div>
-                    <div className="font-bold">{t.guest_name}</div>
-                    <p className="text-xs text-muted-foreground">
-                      {reviewGuestRole(t.room_title)}
-                      {t.room_id && t.room_title ? (
-                        <>
-                          {" · "}
-                          <Link href={`/room/${t.room_id}`} className="font-medium hover:text-primary">
-                            {t.room_title}
-                          </Link>
-                        </>
-                      ) : t.room_title ? (
-                        ` · ${t.room_title}`
-                      ) : null}
-                    </p>
+                  <p className="text-foreground/90 leading-relaxed mb-6">&quot;{t.comment}&quot;</p>
+                  <div className="flex items-center gap-3 pt-4 border-t">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[image:var(--gradient-hero)] text-primary-foreground font-extrabold">
+                      {t.guest_name.charAt(0)}
+                    </div>
+                    <div>
+                      <div className="font-bold">{t.guest_name}</div>
+                      <p className="text-xs text-muted-foreground">
+                        {reviewGuestRole(t.room_title)}
+                        {t.room_id && t.room_title ? (
+                          <>
+                            {" · "}
+                            <Link href={`/room/${t.room_id}`} className="font-medium hover:text-primary">
+                              {t.room_title}
+                            </Link>
+                          </>
+                        ) : t.room_title ? (
+                          ` · ${t.room_title}`
+                        ) : null}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              </Card>
-            ))}
+                </Card>
+              ))}
+            </div>
           </div>
-        )}
+        ) : null}
+
+        {!hasGoogleEmbed ? (
+          <p className="mx-auto mt-6 max-w-lg text-center text-xs text-muted-foreground">
+            Google Maps reviews can appear here once a reviews widget ID is configured.
+          </p>
+        ) : null}
 
         <div className="mt-12 max-w-xl mx-auto">
           {!showForm ? (
