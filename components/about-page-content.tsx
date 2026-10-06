@@ -27,11 +27,11 @@ export function AboutPageContent() {
     (v) => v.title.trim() || v.desc.trim(),
   );
 
-  const heroStats = settings.heroShowStats
+  const missionStats = settings.aboutShowMissionStats
     ? [
-        { k: settings.heroStat1Value, v: settings.heroStat1Label },
-        { k: settings.heroStat2Value, v: settings.heroStat2Label },
-        { k: settings.heroStat3Value, v: settings.heroStat3Label },
+        { k: settings.aboutStat1Value, v: settings.aboutStat1Label },
+        { k: settings.aboutStat2Value, v: settings.aboutStat2Label },
+        { k: settings.aboutStat3Value, v: settings.aboutStat3Label },
       ].filter((s) => s.k.trim() || s.v.trim())
     : [];
 
@@ -41,7 +41,7 @@ export function AboutPageContent() {
       ? [{ k: settings.aboutBrokerageValue, v: settings.aboutBrokerageLabel }]
       : [];
 
-  const stats = [...heroStats, ...brokerageStat];
+  const stats = [...missionStats, ...brokerageStat];
 
   return (
     <>

@@ -10,6 +10,13 @@ export type AboutPageSettings = {
   aboutMissionHeading: string;
   aboutMissionParagraph1: string;
   aboutMissionParagraph2: string;
+  aboutShowMissionStats: boolean;
+  aboutStat1Value: string;
+  aboutStat1Label: string;
+  aboutStat2Value: string;
+  aboutStat2Label: string;
+  aboutStat3Value: string;
+  aboutStat3Label: string;
   aboutShowBrokerage: boolean;
   aboutBrokerageValue: string;
   aboutBrokerageLabel: string;
@@ -36,6 +43,13 @@ export const ABOUT_PAGE_DEFAULTS: AboutPageSettings = {
     "Build the most loved network of seat-based hostels in the country — places that feel less like accommodation and more like home. We believe great living shouldn't cost a fortune, and that community is the most underrated amenity of all.",
   aboutMissionParagraph2:
     "From biometric entry to nutritionist-approved meals, every detail at Stay Inn is designed to give you back the one thing you can't buy more of — time.",
+  aboutShowMissionStats: true,
+  aboutStat1Value: "100+",
+  aboutStat1Label: "Happy Residents",
+  aboutStat2Value: "1",
+  aboutStat2Label: "Locations",
+  aboutStat3Value: "4.8",
+  aboutStat3Label: "/5",
   aboutShowBrokerage: true,
   aboutBrokerageValue: "0",
   aboutBrokerageLabel: "Brokerage",
