@@ -55,7 +55,9 @@ export function ContactMapSection() {
     threads,
   } = useSiteSettings();
   const addressLine = fullAddress || [address, city, country].filter(Boolean).join(", ");
-  const mapSrc = resolveMapEmbedSrc(mapUrl, addressLine);
+  // Include hotel name so share-link fallbacks pin the place, not a city/world view.
+  const mapQuery = [hotelName, addressLine].filter(Boolean).join(", ");
+  const mapSrc = resolveMapEmbedSrc(mapUrl, mapQuery);
 
   return (
     <>

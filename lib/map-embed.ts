@@ -1,51 +1,90 @@
 /**
  * Turns a Google Maps share/embed link (or address) into an iframe `src` for the contact page map.
+ *
+ * Share links with `ftid=` / long `vet=` params do NOT work as iframe embeds (world map).
+ * We normalize them to `cid=` or a place/address query with `output=embed`.
  */
+
+function ensureHttps(raw: string) {
+  return /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
+}
+
+/** `ftid=0x…:0xCID` → decimal Google CID for embed-friendly URLs. */
+function cidFromFtid(ftid: string): string | null {
+  const parts = ftid.split(":");
+  const hex = parts[parts.length - 1]?.replace(/^0x/i, "");
+  if (!hex || !/^[0-9a-f]+$/i.test(hex)) return null;
+  try {
+    return BigInt(`0x${hex}`).toString();
+  } catch {
+    return null;
+  }
+}
+
+function embedWithCid(cid: string) {
+  return `https://www.google.com/maps?cid=${encodeURIComponent(cid)}&z=16&output=embed`;
+}
+
+function embedWithQuery(query: string, zoom = 16) {
+  return `https://www.google.com/maps?q=${encodeURIComponent(query)}&z=${zoom}&output=embed`;
+}
+
 export function resolveMapEmbedSrc(
   mapUrl: string | null | undefined,
   addressFallback: string,
 ): string {
   const raw = mapUrl?.trim();
+  const fallbackQuery = addressFallback.trim() || "Lahore, Pakistan";
+
   if (!raw) {
-    return `https://www.google.com/maps?q=${encodeURIComponent(addressFallback)}&output=embed`;
+    return embedWithQuery(fallbackQuery);
   }
 
-  const withProtocol = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
-
-  if (withProtocol.includes("/maps/embed") || withProtocol.includes("output=embed")) {
-    return withProtocol;
-  }
+  const withProtocol = ensureHttps(raw);
 
   try {
     const url = new URL(withProtocol);
 
-    // Place feature id from Google share links (ftid=0x…:0x…)
-    const ftid = url.searchParams.get("ftid");
-    if (ftid) {
-      return `https://www.google.com/maps?ftid=${encodeURIComponent(ftid)}&output=embed`;
+    // Already a real embed URL from Google's "Embed a map" dialog
+    if (url.pathname.includes("/maps/embed")) {
+      return withProtocol;
     }
 
-    // Explicit query / place name
-    const q = url.searchParams.get("q");
-    if (q && !/^https?:\/\//i.test(q)) {
-      return `https://www.google.com/maps?q=${encodeURIComponent(q)}&output=embed`;
+    // Coordinates in @lat,lng
+    const coordMatch =
+      withProtocol.match(/@(-?\d+\.?\d*),(-?\d+\.?\d*)/) ||
+      url.searchParams.get("q")?.match(/^(-?\d+\.?\d*),\s*(-?\d+\.?\d*)$/);
+    if (coordMatch) {
+      return embedWithQuery(`${coordMatch[1]},${coordMatch[2]}`);
     }
 
-    // CID (decimal place id)
-    const cid = url.searchParams.get("cid");
-    if (cid) {
-      return `https://www.google.com/maps?cid=${encodeURIComponent(cid)}&output=embed`;
-    }
-
-    // /place/Name/@lat,lng/...
+    // /place/Stay+Inn+Hostels/...
     const placeMatch = url.pathname.match(/\/place\/([^/]+)/);
     if (placeMatch?.[1]) {
       const placeName = decodeURIComponent(placeMatch[1].replace(/\+/g, " "));
-      const coordInPath = url.pathname.match(/@(-?\d+\.?\d*),(-?\d+\.?\d*)/);
-      if (coordInPath) {
-        return `https://www.google.com/maps?q=${coordInPath[1]},${coordInPath[2]}&z=15&output=embed`;
-      }
-      return `https://www.google.com/maps?q=${encodeURIComponent(placeName)}&output=embed`;
+      return embedWithQuery(placeName);
+    }
+
+    // Plain q= place name (not another URL, not a share-link dump)
+    const q = url.searchParams.get("q");
+    if (
+      q &&
+      !/^https?:\/\//i.test(q) &&
+      !/google\.com\/maps/i.test(q) &&
+      !url.searchParams.has("vet") &&
+      !url.searchParams.has("ftid")
+    ) {
+      return embedWithQuery(q);
+    }
+
+    const cidParam = url.searchParams.get("cid");
+    if (cidParam && !url.searchParams.has("vet")) {
+      return embedWithCid(cidParam);
+    }
+
+    // Google share links (ftid/vet/lqi) break in iframes → pin using hotel + address instead
+    if (/google\.com\/maps|maps\.google|goo\.gl\/maps|maps\.app\.goo\.gl/i.test(withProtocol)) {
+      return embedWithQuery(fallbackQuery);
     }
   } catch {
     /* fall through */
@@ -53,17 +92,14 @@ export function resolveMapEmbedSrc(
 
   const coordMatch = withProtocol.match(/@(-?\d+\.?\d*),(-?\d+\.?\d*)/);
   if (coordMatch) {
-    return `https://www.google.com/maps?q=${coordMatch[1]},${coordMatch[2]}&z=15&output=embed`;
+    return embedWithQuery(`${coordMatch[1]},${coordMatch[2]}`);
   }
 
-  // Never encode a full Maps URL as q= — that searches the URL text and shows the wrong place.
   if (/google\.com\/maps|maps\.google|goo\.gl\/maps|maps\.app\.goo\.gl/i.test(withProtocol)) {
-    return withProtocol.includes("?")
-      ? `${withProtocol}&output=embed`
-      : `${withProtocol}?output=embed`;
+    return embedWithQuery(fallbackQuery);
   }
 
-  return `https://www.google.com/maps?q=${encodeURIComponent(raw)}&output=embed`;
+  return embedWithQuery(raw);
 }
 
 /** Opens Google Maps (app or web) so guests can navigate to the property. */
@@ -72,46 +108,46 @@ export function resolveMapOpenUrl(
   addressFallback: string,
 ): string {
   const raw = mapUrl?.trim();
+  const fallbackQuery = addressFallback.trim() || "Lahore, Pakistan";
+
   if (!raw) {
-    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addressFallback)}`;
+    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(fallbackQuery)}`;
   }
 
-  const withProtocol = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
+  const withProtocol = ensureHttps(raw);
 
-  if (/google\.com\/maps|maps\.google|goo\.gl\/maps|maps\.app\.goo\.gl/i.test(withProtocol)) {
-    if (withProtocol.includes("/maps/embed") || withProtocol.includes("output=embed")) {
-      try {
-        const u = new URL(withProtocol);
-        const ftid = u.searchParams.get("ftid");
-        if (ftid) {
-          return `https://www.google.com/maps?ftid=${encodeURIComponent(ftid)}`;
-        }
-        const q = u.searchParams.get("q");
-        if (q) {
-          return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`;
-        }
-      } catch {
-        /* fall through */
-      }
-      return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addressFallback)}`;
+  try {
+    const url = new URL(withProtocol);
+    const ftid = url.searchParams.get("ftid");
+    if (ftid) {
+      const cid = cidFromFtid(ftid);
+      if (cid) return `https://www.google.com/maps?cid=${encodeURIComponent(cid)}`;
+      return `https://www.google.com/maps?ftid=${encodeURIComponent(ftid)}`;
+    }
+    const cid = url.searchParams.get("cid");
+    if (cid) return `https://www.google.com/maps?cid=${encodeURIComponent(cid)}`;
+
+    const q = url.searchParams.get("q");
+    if (q && !/^https?:\/\//i.test(q)) {
+      return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`;
     }
 
-    try {
-      const u = new URL(withProtocol);
-      const ftid = u.searchParams.get("ftid");
-      if (ftid) {
-        return `https://www.google.com/maps?ftid=${encodeURIComponent(ftid)}`;
-      }
-    } catch {
-      /* fall through */
+    const placeMatch = url.pathname.match(/\/place\/([^/]+)/);
+    if (placeMatch?.[1]) {
+      const placeName = decodeURIComponent(placeMatch[1].replace(/\+/g, " "));
+      return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(placeName)}`;
     }
-
-    return withProtocol;
+  } catch {
+    /* fall through */
   }
 
   const coordMatch = withProtocol.match(/@(-?\d+\.?\d*),(-?\d+\.?\d*)/);
   if (coordMatch) {
     return `https://www.google.com/maps/search/?api=1&query=${coordMatch[1]},${coordMatch[2]}`;
+  }
+
+  if (/google\.com\/maps|maps\.google|goo\.gl\/maps|maps\.app\.goo\.gl/i.test(withProtocol)) {
+    return withProtocol;
   }
 
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(raw)}`;
